@@ -12,7 +12,7 @@ st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_i
 # Set OpenAI API key from Streamlit secrets
 oai_key = st.secrets.get("OPENAI_API_KEY")
 if oai_key:
-    openai.api_key = oai_key
+    client = openai.OpenAI(api_key=oai_key)
 else:
     st.warning("🔐 OpenAI API key missing! Add it in .streamlit/secrets.toml")
 
@@ -81,14 +81,14 @@ if user_q:
             st.markdown("🧪 Acid ka pH value hota hai **7 se kam**, jaise ki **HCl** ek strong acid hai.")
     elif oai_key:
         try:
-            response_obj = openai.ChatCompletion.create(
+            response_obj = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": "You are Gyani, a wise assistant who explains in Hindi like a human teacher."},
                     {"role": "user", "content": user_q}
                 ]
             )
-            response = response_obj['choices'][0]['message']['content']
+            response = response_obj.choices[0].message.content
             st.success("🧠 Gyani: " + response)
         except Exception as e:
             response = "❌ Gyani abhi sthir hai. Error: " + str(e)
