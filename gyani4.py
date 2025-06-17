@@ -5,18 +5,19 @@ from PIL import Image
 import io
 import base64
 import datetime
-import openai
+from openai import OpenAI
+from openai import OpenAIError
 
 st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_icon="🧠")
 
 # Set OpenAI API key from Streamlit secrets
-oai_key = st.secrets.get("OPENAI_API_KEY")
-if oai_key:
-    client = openai.OpenAI(api_key=oai_key)
+api_key = st.secrets.get("OPENAI_API_KEY")
+if api_key:
+    client = OpenAI(api_key=api_key)
 else:
     st.warning("🔐 OpenAI API key missing! Add it in .streamlit/secrets.toml")
 
-# Logo and Title Section
+# Logo and Title
 st.markdown("""
     <div style='text-align: center;'>
         <img src='https://i.imgur.com/Wr9vB2M.png' alt='Gyani Logo' width='120'/><br>
@@ -79,18 +80,18 @@ if user_q:
             st.markdown("📘 Newton ka doosra niyam: **F = m × a** (Bal = Dravya × Veegh)")
         elif "chemistry" in user_q.lower():
             st.markdown("🧪 Acid ka pH value hota hai **7 se kam**, jaise ki **HCl** ek strong acid hai.")
-    elif oai_key:
+    elif api_key:
         try:
-            response_obj = client.chat.completions.create(
+            chat_response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": "You are Gyani, a wise assistant who explains in Hindi like a human teacher."},
                     {"role": "user", "content": user_q}
                 ]
             )
-            response = response_obj.choices[0].message.content
+            response = chat_response.choices[0].message.content
             st.success("🧠 Gyani: " + response)
-        except Exception as e:
+        except OpenAIError as e:
             response = "❌ Gyani abhi sthir hai. Error: " + str(e)
             st.error(response)
     else:
@@ -115,7 +116,6 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Suggested questions for better interaction
 st.markdown("""
     <div style='margin-top:30px;'>
         <h4>📝 Aap yeh prashn bhi pooch sakte hain:</h4>
@@ -128,5 +128,4 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Timestamp for fun
 st.markdown(f"<p style='text-align: right; font-size: small; color: gray;'>🕒 {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>", unsafe_allow_html=True)
