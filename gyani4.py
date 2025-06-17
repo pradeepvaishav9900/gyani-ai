@@ -92,7 +92,10 @@ if user_q:
             response = chat_response.choices[0].message.content
             st.success("🧠 Gyani: " + response)
         except OpenAIError as e:
-            response = "❌ Gyani abhi sthir hai. Error: " + str(e)
+            if "insufficient_quota" in str(e):
+                response = "❌ Gyani abhi sthir hai. Aapka OpenAI quota samapt ho chuka hai. Naye API key ya billing details check karein."
+            else:
+                response = "❌ Gyani abhi sthir hai. Error: " + str(e)
             st.error(response)
     else:
         response = "🧠 Gyani: Mujhe khed hai, yeh prashn mujhe file me ya mere gyaan me nahi mila. Par main aur seekh raha hoon – aap mujhe naye sawal poochhte rahiye! 🙏"
