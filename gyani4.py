@@ -60,7 +60,6 @@ if 'history' not in st.session_state:
 
 def local_chat(prompt):
     try:
-        # Replace with OpenAI API
         openai.api_key = st.secrets["OPENAI_API_KEY"]
         res = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
@@ -116,6 +115,9 @@ if submitted and user_q_multi:
         elif any(kiss in user_q.lower() for kiss in ["kiss", "kissing", "chumban", "चुंबन"]):
             response = "🧠 Gyani: Chumban ya pyaar se jude sawalon ke liye aapka prashn samanya gyaan mein nahi aata, par yeh ek rochak vishay hai. Samanya roop se pyaar, samman aur sahmati par adharit sambandhon ka gyaan dena bhi zaroori hai."
             st.success(response)
+        elif "cbse syllabus" in user_q.lower():
+            response = "🧠 Gyani: Yeh raha CBSE board ka Class 1 se 12 tak ka syllabus summary link 👇\n👉 https://cbseacademic.nic.in/curriculum_2025.html"
+            st.success(response)
         else:
             response = local_chat(user_q)
             st.success("🧠 Gyani: " + response)
@@ -147,6 +149,9 @@ st.markdown("""
             <li>HTML ka basic structure kya hota hai?</li>
             <li>Is file me syllabus hai kya?</li>
             <li>Java me factorial kaise likhen?</li>
+            <li>CBSE syllabus class 6 science</li>
+            <li>Class 10 Maths syllabus CBSE</li>
+            <li>12th Physics important topics CBSE</li>
         </ul>
     </div>
 """, unsafe_allow_html=True)
