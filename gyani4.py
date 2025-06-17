@@ -136,7 +136,7 @@ if submitted and user_q_multi:
         elif "gyani kaun hai" in user_q.lower() or "kisne banaya" in user_q.lower() or "ballo ai kaun hai" in user_q.lower():
             response = "🤖 Gyani: Main ek AI chatbot hoon jise Pradeep Vaishnav ne banaya hai. Mera uddeshya logo ko sahayata dena aur unki gyaan ki pyaas bujhana hai."
         else:
-            response = local_chat(user_q)
+            response = google_search_answer(user_q)
 
         st.success("🤖 Gyani: " + response)
         st.session_state.history.append(("gyani", response))
