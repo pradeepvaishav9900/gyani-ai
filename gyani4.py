@@ -58,50 +58,52 @@ if uploaded_file is not None:
 if 'history' not in st.session_state:
     st.session_state.history = []
 
-user_q = st.text_input("🧠 Aapka Prashn likhiye:")
-if user_q:
-    st.session_state.history.append(("user", user_q))
-    st.markdown(f"👤 Aapka Prashn: *{user_q}*")
-    response = ""
+user_q_multi = st.text_area("🧠 Aap apne prashn yahan likhiye (ek ya adhik prashn, har prashn naye line me):")
+if user_q_multi:
+    questions = [q.strip() for q in user_q_multi.split('\n') if q.strip()]
+    for user_q in questions:
+        st.session_state.history.append(("user", user_q))
+        st.markdown(f"👤 Aapka Prashn: *{user_q}*")
+        response = ""
 
-    if user_q.lower() in text_content.lower():
-        response = "🧠 Gyani: Bahut accha prashn! Haan, iska uttar mujhe aapke file me mil gaya hai. 👇"
-        st.success(response)
-    elif any(k in user_q.lower() for k in ["python", "java", "html", "chemistry", "physics"]):
-        response = "🧠 Gyani: Hmm... Yeh ek technical prashn lagta hai. Chaliye, main aapko iske baare mein thoda batata hoon:"
-        st.info(response)
-        if "python" in user_q.lower():
-            st.code("for i in range(5):\n    print(i)", language="python")
-        elif "java" in user_q.lower():
-            st.code("public class Main {\n public static void main(String[] args) {\n  System.out.println(\"Hello\");\n }\n}", language="java")
-        elif "html" in user_q.lower():
-            st.code("<html><body>Hello</body></html>", language="html")
-        elif "physics" in user_q.lower():
-            st.markdown("📘 Newton ka doosra niyam: **F = m × a** (Bal = Dravya × Veegh)")
-        elif "chemistry" in user_q.lower():
-            st.markdown("🧪 Acid ka pH value hota hai **7 se kam**, jaise ki **HCl** ek strong acid hai.")
-    elif api_key:
-        try:
-            chat_response = openai.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "You are Gyani, a wise assistant who explains in Hindi like a human teacher."},
-                    {"role": "user", "content": user_q}
-                ]
-            )
-            response = chat_response.choices[0].message.content
-            st.success("🧠 Gyani: " + response)
-        except OpenAIError as e:
-            if "insufficient_quota" in str(e):
-                response = "❌ Gyani abhi sthir hai. Aapka OpenAI quota samapt ho chuka hai. Naye API key ya billing details check karein."
-            else:
-                response = "❌ Gyani abhi sthir hai. Error: " + str(e)
-            st.error(response)
-    else:
-        response = "🧠 Gyani: Mujhe khed hai, yeh prashn mujhe file me ya mere gyaan me nahi mila. Par main aur seekh raha hoon – aap mujhe naye sawal poochhte rahiye! 🙏"
-        st.warning(response)
+        if user_q.lower() in text_content.lower():
+            response = "🧠 Gyani: Bahut accha prashn! Haan, iska uttar mujhe aapke file me mil gaya hai. 👇"
+            st.success(response)
+        elif any(k in user_q.lower() for k in ["python", "java", "html", "chemistry", "physics"]):
+            response = "🧠 Gyani: Hmm... Yeh ek technical prashn lagta hai. Chaliye, main aapko iske baare mein thoda batata hoon:"
+            st.info(response)
+            if "python" in user_q.lower():
+                st.code("for i in range(5):\n    print(i)", language="python")
+            elif "java" in user_q.lower():
+                st.code("public class Main {\n public static void main(String[] args) {\n  System.out.println(\"Hello\");\n }\n}", language="java")
+            elif "html" in user_q.lower():
+                st.code("<html><body>Hello</body></html>", language="html")
+            elif "physics" in user_q.lower():
+                st.markdown("📘 Newton ka doosra niyam: **F = m × a** (Bal = Dravya × Veegh)")
+            elif "chemistry" in user_q.lower():
+                st.markdown("🧪 Acid ka pH value hota hai **7 se kam**, jaise ki **HCl** ek strong acid hai.")
+        elif api_key:
+            try:
+                chat_response = openai.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": "You are Gyani, a wise assistant who explains in Hindi like a human teacher."},
+                        {"role": "user", "content": user_q}
+                    ]
+                )
+                response = chat_response.choices[0].message.content
+                st.success("🧠 Gyani: " + response)
+            except OpenAIError as e:
+                if "insufficient_quota" in str(e):
+                    response = "❌ Gyani abhi sthir hai. Aapka OpenAI quota samapt ho chuka hai. Naye API key ya billing details check karein."
+                else:
+                    response = "❌ Gyani abhi sthir hai. Error: " + str(e)
+                st.error(response)
+        else:
+            response = "🧠 Gyani: Mujhe khed hai, yeh prashn mujhe file me ya mere gyaan me nahi mila. Par main aur seekh raha hoon – aap mujhe naye sawal poochhte rahiye! 🙏"
+            st.warning(response)
 
-    st.session_state.history.append(("gyani", response))
+        st.session_state.history.append(("gyani", response))
 
 # Display full conversation
 st.markdown("<hr><h4>📜 Purani Baatein:</h4>", unsafe_allow_html=True)
