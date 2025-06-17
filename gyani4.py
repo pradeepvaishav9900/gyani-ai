@@ -7,6 +7,7 @@ import base64
 import datetime
 import requests
 from langdetect import detect
+import openai
 
 st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_icon="🧠")
 
@@ -59,10 +60,15 @@ if 'history' not in st.session_state:
 
 def local_chat(prompt):
     try:
-        res = requests.post("http://localhost:11434/api/generate", json={"model": "llama3", "prompt": prompt})
-        return res.json().get("response", "❌ Gyani abhi sthir hai.")
+        # Replace with OpenAI API
+        openai.api_key = st.secrets["OPENAI_API_KEY"]
+        res = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return res.choices[0].message.content.strip()
     except Exception as e:
-        return f"⚠️ Local model error: {str(e)}"
+        return f"⚠️ OpenAI API error: {str(e)}"
 
 with st.form("chat_form", clear_on_submit=True):
     cols = st.columns([8, 1])
