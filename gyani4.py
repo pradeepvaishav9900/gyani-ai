@@ -5,18 +5,10 @@ from PIL import Image
 import io
 import base64
 import datetime
-import openai
-from openai._exceptions import OpenAIError
+import requests
 from langdetect import detect
 
 st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_icon="🧠")
-
-# Set OpenAI API key from Streamlit secrets
-api_key = st.secrets.get("OPENAI_API_KEY")
-if api_key:
-    openai.api_key = api_key
-else:
-    st.warning("🔐 OpenAI API key missing! Add it in .streamlit/secrets.toml")
 
 # Logo and Title
 st.markdown("""
@@ -65,6 +57,13 @@ if uploaded_file is not None:
 if 'history' not in st.session_state:
     st.session_state.history = []
 
+def local_chat(prompt):
+    try:
+        res = requests.post("http://localhost:11434/api/generate", json={"model": "llama3", "prompt": prompt})
+        return res.json().get("response", "❌ Gyani abhi sthir hai.")
+    except Exception as e:
+        return f"⚠️ Local model error: {str(e)}"
+
 with st.form("chat_form", clear_on_submit=True):
     cols = st.columns([8, 1])
     with cols[0]:
@@ -88,21 +87,11 @@ if submitted and user_q_multi:
             st.success(response)
         elif any(k in user_q.lower() for k in ["python", "java", "html", "chemistry", "physics"]):
             if any(x in user_q.lower() for x in ["code", "program", "likho", "likhna"]):
-                try:
-                    chat_response = openai.chat.completions.create(
-                        model="gpt-4o",
-                        messages=[
-                            {"role": "system", "content": "You are a code assistant who writes complete and clean programs."},
-                            {"role": "user", "content": user_q}
-                        ]
-                    )
-                    code_response = chat_response.choices[0].message.content
-                    st.markdown("🧠 Gyani: Yeh raha aapka code 👇")
-                    st.code(code_response)
-                    response = "Code box me diya gaya hai. Agar aapko kisi aur topic par code chahiye to poochhiye!"
-                    st.success(response)
-                except Exception as e:
-                    st.error("⚠️ Code generate karne me samasya: " + str(e))
+                response_text = local_chat("You are a helpful coding assistant. " + user_q)
+                st.markdown("🧠 Gyani: Yeh raha aapka code 👇")
+                st.code(response_text)
+                st.success("Code box me diya gaya hai. Agar aapko kisi aur topic par code chahiye to poochhiye!")
+                response = response_text
             else:
                 response = "🧠 Gyani: Yeh technical coding ya vishay sambandhit prashn hai. Yeh raha aapka code/gyan:"
                 st.info(response)
@@ -119,40 +108,9 @@ if submitted and user_q_multi:
         elif any(kiss in user_q.lower() for kiss in ["kiss", "kissing", "chumban", "चुंबन"]):
             response = "🧠 Gyani: Chumban ya pyaar se jude sawalon ke liye aapka prashn samanya gyaan mein nahi aata, par yeh ek rochak vishay hai. Samanya roop se pyaar, samman aur sahmati par adharit sambandhon ka gyaan dena bhi zaroori hai."
             st.success(response)
-        elif api_key:
-            try:
-                detected_lang = detect(user_q)
-                sys_prompt = {
-                    'hi': "You are Gyani, a wise assistant who explains in Hindi like a human teacher.",
-                    'en': "You are Gyani, a wise assistant who explains in simple English.",
-                    'pa': "You are Gyani, a wise assistant who explains in Punjabi.",
-                    'gu': "You are Gyani, a wise assistant who explains in Gujarati.",
-                    'bho': "You are Gyani, a wise assistant who explains in Bhojpuri.",
-                    'mr': "You are Gyani, a wise assistant who explains in Marathi.",
-                    'bn': "You are Gyani, a wise assistant who explains in Bengali."
-                }.get(detected_lang, "You are Gyani, a wise assistant who explains clearly and kindly.")
-
-                chat_response = openai.chat.completions.create(
-                    model="gpt-4o",
-                    messages=[
-                        {"role": "system", "content": sys_prompt},
-                        {"role": "user", "content": user_q}
-                    ]
-                )
-                response = chat_response.choices[0].message.content
-                st.success("🧠 Gyani: " + response)
-            except OpenAIError as e:
-                if "insufficient_quota" in str(e):
-                    response = "❌ Gyani abhi sthir hai. Aapka OpenAI quota samapt ho chuka hai. Naye API key ya billing details check karein."
-                else:
-                    response = "❌ Gyani abhi sthir hai. Error: " + str(e)
-                st.error(response)
-            except Exception as e:
-                response = "⚠️ Koi samasya hui: " + str(e)
-                st.error(response)
         else:
-            response = "🧠 Gyani: Mujhe khed hai, yeh prashn mujhe file me ya mere gyaan me nahi mila. Par main aur seekh raha hoon – aap mujhe naye sawal poochhte rahiye! 🙏"
-            st.warning(response)
+            response = local_chat(user_q)
+            st.success("🧠 Gyani: " + response)
 
         st.session_state.history.append(("gyani", response))
 
