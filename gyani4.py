@@ -106,7 +106,7 @@ def local_chat(prompt):
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
-        return f"🧠 Gyani ka AI engine offline hai ya API key sahi nahi hai: {e}"
+        return "🧠 Gyani ka AI engine offline hai ya API key sahi nahi hai. कृपया OpenAI API key configure karein."
 
 with st.form("chat_form", clear_on_submit=True):
     cols = st.columns([8, 1])
