@@ -66,16 +66,27 @@ def google_search_answer(query):
         res = requests.get(f"https://www.google.com/search?q={query}", headers=headers)
         soup = BeautifulSoup(res.text, 'html.parser')
 
-        answer = soup.find("div", class_="BNeawe s3v9rd AP7Wnd")
-        if answer:
-            return answer.get_text()
-        else:
-            return "Maaf kijiye, mujhe Google se sahi uttar nahi mila."
-    except:
-        return "Internet ya Google access mein kuch samasya hai."
+        for cls in [
+            "BNeawe iBp4i AP7Wnd",
+            "BNeawe s3v9rd AP7Wnd",
+            "kno-rdesc",
+            "Z0LcW",
+            "BVG0Nb"
+        ]:
+            ans = soup.find("div", class_=cls)
+            if ans:
+                return ans.get_text()
+
+        paragraphs = soup.find_all("p")
+        if paragraphs:
+            return paragraphs[0].get_text()
+
+        return "Maaf kijiye, mujhe Google se sahi uttar nahi mila."
+    except Exception as e:
+        return f"Internet ya Google access mein kuch samasya hai: {str(e)}"
 
 def local_chat(prompt):
-    return "🔒 Gyani ka AI engine filhal offline hai. OpenAI key ki jarurat hai advance uttar ke liye."
+    return None
 
 with st.form("chat_form", clear_on_submit=True):
     cols = st.columns([8, 1])
@@ -94,42 +105,20 @@ if submitted and user_q_multi:
         greetings = ["hello", "hi", "hlo", "ram ram", "jai shree ram", "namaste", "jai jagannath"]
         if any(greet in user_q.lower() for greet in greetings):
             response = "🤖 Gyani: Jai Jagannath 🙏 Aapka swagat hai! Aap kya janna chahenge?"
-            st.success(response)
         elif user_q.lower() in text_content.lower():
             response = "🤖 Gyani: Bahut accha prashn! Haan, iska uttar mujhe aapke file me mil gaya hai. 👇"
-            st.success(response)
         elif any(k in user_q.lower() for k in ["python", "java", "html", "c++", "javascript", "c language"]):
-            if any(x in user_q.lower() for x in ["code", "program", "likho", "likhna", "bana"]):
-                st.markdown("🤖 Gyani: Aapne coding ka prashn kiya hai. Filhal advanced coding AI disabled hai (OpenAI API key chahiye).")
-                st.info("Lekin main kuch basic udaharan de raha hoon:")
-                if "python" in user_q.lower():
-                    st.code("for i in range(5):\n    print(i)", language="python")
-                elif "java" in user_q.lower():
-                    st.code("public class Main {\n public static void main(String[] args) {\n  System.out.println(\"Hello\");\n }\n}", language="java")
-                elif "html" in user_q.lower():
-                    st.code("<html><body>Hello</body></html>", language="html")
-                elif "c++" in user_q.lower():
-                    st.code("#include<iostream>\nusing namespace std;\nint main() {\n cout << \"Hello\";\n return 0;\n}", language="cpp")
-                elif "javascript" in user_q.lower():
-                    st.code("console.log('Hello World');", language="javascript")
-                elif "c language" in user_q.lower():
-                    st.code("#include<stdio.h>\nint main() {\n printf(\"Hello\");\n return 0;\n}", language="c")
-            else:
-                response = "🤖 Gyani: Yeh technical coding ya vishay sambandhit prashn hai. Basic code niche diya gaya hai."
-                st.info(response)
+            response = "🤖 Gyani: Aapne coding ka prashn kiya hai. Filhal advanced coding AI disabled hai (OpenAI API key chahiye)."
         elif "cbse syllabus" in user_q.lower():
             response = "🤖 Gyani: Yeh raha CBSE board ka Class 1 se 12 tak ka syllabus summary link 👇\n👉 https://cbseacademic.nic.in/curriculum_2025.html"
-            st.success(response)
         elif any(kiss in user_q.lower() for kiss in ["kiss", "kissing", "chumban", "चुंबन"]):
             response = "🤖 Gyani: Chumban ya pyaar se jude sawalon ke liye aapka prashn samanya gyaan mein nahi aata, par yeh ek rochak vishay hai. Samanya roop se pyaar, samman aur sahmati par adharit sambandhon ka gyaan dena bhi zaroori hai."
-            st.success(response)
         elif "gyani kaun hai" in user_q.lower() or "kisne banaya" in user_q.lower() or "ballo ai kaun hai" in user_q.lower():
             response = "🤖 Gyani: Main ek AI chatbot hoon jise Pradeep Vaishnav ne banaya hai. Mera uddeshya logo ko sahayata dena aur unki gyaan ki pyaas bujhana hai."
-            st.success(response)
         else:
             response = google_search_answer(user_q)
-            st.success("🤖 Gyani: " + response)
 
+        st.success("🤖 Gyani: " + response)
         st.session_state.history.append(("gyani", response))
 
 # Display full conversation
