@@ -1,6 +1,7 @@
 streamlit
-openai
 PyPDF2
 pytesseract
 Pillow
+requests
+beautifulsoup4
 langdetect
