@@ -10,6 +10,7 @@ from langdetect import detect
 from bs4 import BeautifulSoup
 import wikipedia
 from wikipedia.exceptions import PageError, DisambiguationError
+import openai
 
 st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_icon="🤖")
 
