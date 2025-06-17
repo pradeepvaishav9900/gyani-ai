@@ -7,7 +7,6 @@ import base64
 import datetime
 import requests
 from langdetect import detect
-import openai
 
 st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_icon="🧠")
 
@@ -17,6 +16,8 @@ st.markdown("""
         <img src='https://i.imgur.com/Wr9vB2M.png' alt='Gyani Logo' width='120'/><br>
         <h1 style='margin-top: 10px;'>🧠 Gyani</h1>
         <h4 style='color: gray;'>Developed by Pradeep Vaishnav</h4>
+        <p style='font-size: 14px; color: #555;'>Gyani ek AI sahayak hai jo Pradeep Vaishnav dwara banaya gaya hai. Iska uddeshya logo ko gyaan dena aur unki samasyaon ka samadhan karna hai.</p>
+        <p style='font-size: 13px; color: #999;'>Creator & Owner: <strong>Pradeep Vaishnav</strong></p>
     </div>
     <hr>
 """, unsafe_allow_html=True)
@@ -59,15 +60,7 @@ if 'history' not in st.session_state:
     st.session_state.history = []
 
 def local_chat(prompt):
-    try:
-        openai.api_key = st.secrets["OPENAI_API_KEY"]
-        res = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return res.choices[0].message.content.strip()
-    except Exception as e:
-        return f"⚠️ OpenAI API error: {str(e)}"
+    return "🔒 Gyani ka AI engine filhal offline hai. OpenAI key ki jarurat hai advance uttar ke liye."
 
 with st.form("chat_form", clear_on_submit=True):
     cols = st.columns([8, 1])
@@ -92,14 +85,8 @@ if submitted and user_q_multi:
             st.success(response)
         elif any(k in user_q.lower() for k in ["python", "java", "html", "c++", "javascript", "c language"]):
             if any(x in user_q.lower() for x in ["code", "program", "likho", "likhna", "bana"]):
-                response_text = local_chat("You are an expert programming assistant. Answer as code only. Question: " + user_q)
-                st.markdown("🧠 Gyani: Yeh raha aapka code 👇")
-                st.code(response_text)
-                st.success("Code box me diya gaya hai. Agar aapko kisi aur topic par code chahiye to poochhiye!")
-                response = response_text
-            else:
-                response = "🧠 Gyani: Yeh technical coding ya vishay sambandhit prashn hai. Yeh raha aapka code/gyan:"
-                st.info(response)
+                st.markdown("🧠 Gyani: Aapne coding ka prashn kiya hai. Filhal advanced coding AI disabled hai (OpenAI API key chahiye).")
+                st.info("Lekin main kuch basic udaharan de raha hoon:")
                 if "python" in user_q.lower():
                     st.code("for i in range(5):\n    print(i)", language="python")
                 elif "java" in user_q.lower():
@@ -112,11 +99,14 @@ if submitted and user_q_multi:
                     st.code("console.log('Hello World');", language="javascript")
                 elif "c language" in user_q.lower():
                     st.code("#include<stdio.h>\nint main() {\n printf(\"Hello\");\n return 0;\n}", language="c")
-        elif any(kiss in user_q.lower() for kiss in ["kiss", "kissing", "chumban", "चुंबन"]):
-            response = "🧠 Gyani: Chumban ya pyaar se jude sawalon ke liye aapka prashn samanya gyaan mein nahi aata, par yeh ek rochak vishay hai. Samanya roop se pyaar, samman aur sahmati par adharit sambandhon ka gyaan dena bhi zaroori hai."
-            st.success(response)
+            else:
+                response = "🧠 Gyani: Yeh technical coding ya vishay sambandhit prashn hai. Basic code niche diya gaya hai."
+                st.info(response)
         elif "cbse syllabus" in user_q.lower():
             response = "🧠 Gyani: Yeh raha CBSE board ka Class 1 se 12 tak ka syllabus summary link 👇\n👉 https://cbseacademic.nic.in/curriculum_2025.html"
+            st.success(response)
+        elif any(kiss in user_q.lower() for kiss in ["kiss", "kissing", "chumban", "चुंबन"]):
+            response = "🧠 Gyani: Chumban ya pyaar se jude sawalon ke liye aapka prashn samanya gyaan mein nahi aata, par yeh ek rochak vishay hai. Samanya roop se pyaar, samman aur sahmati par adharit sambandhon ka gyaan dena bhi zaroori hai."
             st.success(response)
         else:
             response = local_chat(user_q)
@@ -136,6 +126,7 @@ st.markdown("""
     <hr>
     <div style='text-align: center; color: gray;'>
         🤖 <strong>Gyani</strong> Chatbot ka nirmaan <strong>Pradeep Vaishnav</strong> dwara kiya gaya hai.<br>
+        Iska uddeshya logo ko gyaan dena aur unki samasyaon ka samadhan karna hai.<br>
         Jai Jagannath 🙏
     </div>
 """, unsafe_allow_html=True)
