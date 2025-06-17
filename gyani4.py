@@ -83,18 +83,29 @@ def google_search_answer(query):
         if paragraphs:
             return paragraphs[0].get_text()
 
-        # Try Wikipedia as fallback
         try:
             summary = wikipedia.summary(query, sentences=2, auto_suggest=True, redirect=True)
             return summary
         except (PageError, DisambiguationError):
-            return "❌ Maaf kijiye, mujhe Google se sahi uttar nahi mila."
+            pass
+
+        return "❌ Maaf kijiye, mujhe Google se ya Wikipedia se sahi uttar nahi mila."
 
     except Exception as e:
         return f"❌ Maaf kijiye, kuch samasya aayi hai: {str(e)}"
 
 def local_chat(prompt):
-    return "🧠 Gyani ka AI engine filhal offline hai. OpenAI key ki jarurat hai."
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        return f"🧠 Gyani ka AI engine offline hai ya API key sahi nahi hai: {e}"
 
 with st.form("chat_form", clear_on_submit=True):
     cols = st.columns([8, 1])
