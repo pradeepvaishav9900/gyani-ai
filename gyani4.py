@@ -1,55 +1,145 @@
-def offline_gyani_response(prompt):
-    prompt = prompt.lower()
+import streamlit as st
+import PyPDF2
+import pytesseract
+from PIL import Image
+import io
+import base64
+import datetime
+import requests
+from langdetect import detect
 
-    # Physics
-    if "newton" in prompt and "first" in prompt:
-        return "Newton ka pehla niyam: Ek vastu tab tak vishram ya seedhi gati me rehti hai jab tak koi external force us par kaam na kare."
-    elif "newton" in prompt and "second" in prompt:
-        return "Newton ka doosra niyam: F = m × a (Bal = Dravya × Veegh)."
-    elif "newton" in prompt and "third" in prompt:
-        return "Newton ka teesra niyam: Har kriya ke barabar aur vipreet pratikriya hoti hai."
+st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_icon="🧠")
 
-    # Chemistry
-    elif "acid" in prompt:
-        return "Acid ka pH 7 se kam hota hai. Jaise HCl ek strong acid hai."
-    elif "base" in prompt:
-        return "Base ya alkali ka pH 7 se jyada hota hai. Jaise NaOH ek strong base hai."
-    elif "neutral" in prompt:
-        return "Neutral solution ka pH bilkul 7 hota hai. Jaise distilled water."
+# Logo and Title
+st.markdown("""
+    <div style='text-align: center;'>
+        <img src='https://i.imgur.com/Wr9vB2M.png' alt='Gyani Logo' width='120'/><br>
+        <h1 style='margin-top: 10px;'>🧠 Gyani</h1>
+        <h4 style='color: gray;'>Developed by Pradeep Vaishnav</h4>
+    </div>
+    <hr>
+""", unsafe_allow_html=True)
 
-    # Math
-    elif "pythagoras" in prompt:
-        return "Pythagoras theorem: In a right triangle, (hypotenuse)^2 = (base)^2 + (height)^2"
-    elif "derivative" in prompt:
-        return "Derivative ek function ki rate of change ko dikhata hai. f(x) = x^2 ka derivative hai 2x."
+col1, col2 = st.columns([8, 1])
+with col1:
+    uploaded_file = st.file_uploader("", type=["pdf", "png", "jpg", "jpeg"], label_visibility="collapsed")
+with col2:
+    st.markdown("<div style='text-align: right; font-size: 22px;'>➕</div>", unsafe_allow_html=True)
 
-    # Python Programming
-    elif "for loop" in prompt:
-        return "Python me for loop aise chalta hai:\nfor i in range(5):\n    print(i)"
-    elif "if else" in prompt:
-        return "Python me if-else statement:\nif condition:\n    # code\nelse:\n    # code"
-    elif "function" in prompt:
-        return "Python me function define karte hain:\ndef my_func():\n    print(\"Hello\")"
+text_content = ""
 
-    # HTML
-    elif "html structure" in prompt:
-        return "Basic HTML structure:\n<html>\n  <head><title>Page</title></head>\n  <body>Content here</body>\n</html>"
+# Text Extraction
 
-    # GK / SSC
-    elif "constitution" in prompt:
-        return "Bharat ka samvidhan 26 January 1950 ko lagu hua tha."
-    elif "president of india" in prompt:
-        return "Bharat ke vartaman rashtrapati ka naam Draupadi Murmu hai (2024 tak)."
-    elif "first prime minister" in prompt:
-        return "Bharat ke pehle pradhanmantri the Pandit Jawaharlal Nehru."
+def extract_text_from_pdf(file):
+    reader = PyPDF2.PdfReader(file)
+    text = ""
+    for page in reader.pages:
+        text += page.extract_text()
+    return text
 
+def extract_text_from_image(file):
+    image = Image.open(file)
+    text = pytesseract.image_to_string(image)
+    return text
+
+if uploaded_file is not None:
+    file_type = uploaded_file.type
+    with st.spinner("📚 Gyani file ka vishleshan kar raha hai..."):
+        if file_type == "application/pdf":
+            text_content = extract_text_from_pdf(uploaded_file)
+        elif "image" in file_type:
+            text_content = extract_text_from_image(uploaded_file)
+
+    st.success("✅ File se gyaan prapt ho gaya!")
+    st.text_area("📖 Extracted Content:", text_content[:3000], height=300)
+
+# Chat History
+if 'history' not in st.session_state:
+    st.session_state.history = []
+
+def local_chat(prompt):
+    try:
+        res = requests.post("http://localhost:11434/api/generate", json={"model": "llama3", "prompt": prompt})
+        return res.json().get("response", "❌ Gyani abhi sthir hai.")
+    except Exception as e:
+        return f"⚠️ Local model error: {str(e)}"
+
+with st.form("chat_form", clear_on_submit=True):
+    cols = st.columns([8, 1])
+    with cols[0]:
+        user_q_multi = st.text_area("", key="chat_input", placeholder="🧠 Aap apne prashn yahan likhiye (Enter se bhejein)...")
+    with cols[1]:
+        submitted = st.form_submit_button("↵")
+
+if submitted and user_q_multi:
+    questions = [q.strip() for q in user_q_multi.split('\n') if q.strip()]
+    for user_q in questions:
+        st.session_state.history.append(("user", user_q))
+        st.markdown(f"👤 Aapka Prashn: *{user_q}*")
+        response = ""
+
+        greetings = ["hello", "hi", "hlo", "ram ram", "jai shree ram", "namaste", "jai jagannath"]
+        if any(greet in user_q.lower() for greet in greetings):
+            response = "🧠 Gyani: Jai Jagannath 🙏 Aapka swagat hai! Aap kya janna chahenge?"
+            st.success(response)
+        elif user_q.lower() in text_content.lower():
+            response = "🧠 Gyani: Bahut accha prashn! Haan, iska uttar mujhe aapke file me mil gaya hai. 👇"
+            st.success(response)
+        elif any(k in user_q.lower() for k in ["python", "java", "html", "chemistry", "physics"]):
+            if any(x in user_q.lower() for x in ["code", "program", "likho", "likhna"]):
+                response_text = local_chat("You are a helpful coding assistant. " + user_q)
+                st.markdown("🧠 Gyani: Yeh raha aapka code 👇")
+                st.code(response_text)
+                st.success("Code box me diya gaya hai. Agar aapko kisi aur topic par code chahiye to poochhiye!")
+                response = response_text
+            else:
+                response = "🧠 Gyani: Yeh technical coding ya vishay sambandhit prashn hai. Yeh raha aapka code/gyan:"
+                st.info(response)
+                if "python" in user_q.lower():
+                    st.code("for i in range(5):\n    print(i)", language="python")
+                elif "java" in user_q.lower():
+                    st.code("public class Main {\n public static void main(String[] args) {\n  System.out.println(\"Hello\");\n }\n}", language="java")
+                elif "html" in user_q.lower():
+                    st.code("<html><body>Hello</body></html>", language="html")
+                elif "physics" in user_q.lower():
+                    st.markdown("📘 Newton ka doosra niyam: **F = m × a** (Bal = Dravya × Veegh)")
+                elif "chemistry" in user_q.lower():
+                    st.markdown("🧪 Acid ka pH value hota hai **7 se kam**, jaise ki **HCl** ek strong acid hai.")
+        elif any(kiss in user_q.lower() for kiss in ["kiss", "kissing", "chumban", "चुंबन"]):
+            response = "🧠 Gyani: Chumban ya pyaar se jude sawalon ke liye aapka prashn samanya gyaan mein nahi aata, par yeh ek rochak vishay hai. Samanya roop se pyaar, samman aur sahmati par adharit sambandhon ka gyaan dena bhi zaroori hai."
+            st.success(response)
+        else:
+            response = local_chat(user_q)
+            st.success("🧠 Gyani: " + response)
+
+        st.session_state.history.append(("gyani", response))
+
+# Display full conversation
+st.markdown("<hr><h4>📜 Purani Baatein:</h4>", unsafe_allow_html=True)
+for speaker, msg in st.session_state.history:
+    if speaker == "user":
+        st.markdown(f"👤 **User**: {msg}")
     else:
-        return "🧠 Gyani: Ye prashn mere offline gyaan me nahi hai. Kripya aur prashn poochhiye ya internet model ka upyog kijiye."
+        st.markdown(f"🧠 **Gyani**: {msg}")
 
-# Test
-if __name__ == "__main__":
-    while True:
-        user_q = input("Prashn puchho: ")
-        if user_q.strip().lower() in ["exit", "quit"]:
-            break
-        print(offline_gyani_response(user_q))
+st.markdown("""
+    <hr>
+    <div style='text-align: center; color: gray;'>
+        🤖 <strong>Gyani</strong> Chatbot ka nirmaan <strong>Pradeep Vaishnav</strong> dwara kiya gaya hai.<br>
+        Jai Jagannath 🙏
+    </div>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+    <div style='margin-top:30px;'>
+        <h4>📝 Aap yeh prashn bhi pooch sakte hain:</h4>
+        <ul>
+            <li>Python me loop kaise chalta hai?</li>
+            <li>Newton ka pehla niyam kya hai?</li>
+            <li>HTML ka basic structure kya hota hai?</li>
+            <li>Is file me syllabus hai kya?</li>
+        </ul>
+    </div>
+""", unsafe_allow_html=True)
+
+st.markdown(f"<p style='text-align: right; font-size: small; color: gray;'>🕒 {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>", unsafe_allow_html=True)
