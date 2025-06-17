@@ -1,5 +1,5 @@
 streamlit
-pytesseract
-pillow
 PyPDF2
-openai
+pytesseract
+Pillow
+openai>=1.0.0
