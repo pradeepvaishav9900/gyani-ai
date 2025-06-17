@@ -6,7 +6,7 @@ import io
 import base64
 import datetime
 import openai
-from openai.error import OpenAIError
+from openai._exceptions import OpenAIError
 
 st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_icon="🧠")
 
@@ -82,14 +82,14 @@ if user_q:
             st.markdown("🧪 Acid ka pH value hota hai **7 se kam**, jaise ki **HCl** ek strong acid hai.")
     elif api_key:
         try:
-            chat_response = openai.ChatCompletion.create(
+            chat_response = openai.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": "You are Gyani, a wise assistant who explains in Hindi like a human teacher."},
                     {"role": "user", "content": user_q}
                 ]
             )
-            response = chat_response.choices[0].message['content']
+            response = chat_response.choices[0].message.content
             st.success("🧠 Gyani: " + response)
         except OpenAIError as e:
             response = "❌ Gyani abhi sthir hai. Error: " + str(e)
