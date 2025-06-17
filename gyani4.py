@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 import wikipedia
 from wikipedia.exceptions import PageError, DisambiguationError
 import openai
+import os
 
 st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_icon="🤖")
 
@@ -97,6 +98,10 @@ def google_search_answer(query):
 
 def local_chat(prompt):
     try:
+        openai.api_key = os.getenv("OPENAI_API_KEY")
+        if not openai.api_key:
+            return "🔑 API key missing. Kripya environment variable me 'OPENAI_API_KEY' set karein."
+
         response = openai.ChatCompletion.create(
             model="gpt-4o",
             messages=[
