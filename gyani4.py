@@ -36,6 +36,8 @@ with col2:
 
 text_content = ""
 
+# Text Extraction
+
 def extract_text_from_pdf(file):
     reader = PyPDF2.PdfReader(file)
     text = ""
@@ -85,18 +87,38 @@ if submitted and user_q_multi:
             response = "🧠 Gyani: Bahut accha prashn! Haan, iska uttar mujhe aapke file me mil gaya hai. 👇"
             st.success(response)
         elif any(k in user_q.lower() for k in ["python", "java", "html", "chemistry", "physics"]):
-            response = "🧠 Gyani: Hmm... Yeh ek technical prashn lagta hai. Chaliye, main aapko iske baare mein thoda batata hoon:"
-            st.info(response)
-            if "python" in user_q.lower():
-                st.code("for i in range(5):\n    print(i)", language="python")
-            elif "java" in user_q.lower():
-                st.code("public class Main {\n public static void main(String[] args) {\n  System.out.println(\"Hello\");\n }\n}", language="java")
-            elif "html" in user_q.lower():
-                st.code("<html><body>Hello</body></html>", language="html")
-            elif "physics" in user_q.lower():
-                st.markdown("📘 Newton ka doosra niyam: **F = m × a** (Bal = Dravya × Veegh)")
-            elif "chemistry" in user_q.lower():
-                st.markdown("🧪 Acid ka pH value hota hai **7 se kam**, jaise ki **HCl** ek strong acid hai.")
+            if any(x in user_q.lower() for x in ["code", "program", "likho", "likhna"]):
+                try:
+                    chat_response = openai.chat.completions.create(
+                        model="gpt-4o",
+                        messages=[
+                            {"role": "system", "content": "You are a code assistant who writes complete and clean programs."},
+                            {"role": "user", "content": user_q}
+                        ]
+                    )
+                    code_response = chat_response.choices[0].message.content
+                    st.markdown("🧠 Gyani: Yeh raha aapka code 👇")
+                    st.code(code_response)
+                    response = "Code box me diya gaya hai. Agar aapko kisi aur topic par code chahiye to poochhiye!"
+                    st.success(response)
+                except Exception as e:
+                    st.error("⚠️ Code generate karne me samasya: " + str(e))
+            else:
+                response = "🧠 Gyani: Yeh technical coding ya vishay sambandhit prashn hai. Yeh raha aapka code/gyan:"
+                st.info(response)
+                if "python" in user_q.lower():
+                    st.code("for i in range(5):\n    print(i)", language="python")
+                elif "java" in user_q.lower():
+                    st.code("public class Main {\n public static void main(String[] args) {\n  System.out.println(\"Hello\");\n }\n}", language="java")
+                elif "html" in user_q.lower():
+                    st.code("<html><body>Hello</body></html>", language="html")
+                elif "physics" in user_q.lower():
+                    st.markdown("📘 Newton ka doosra niyam: **F = m × a** (Bal = Dravya × Veegh)")
+                elif "chemistry" in user_q.lower():
+                    st.markdown("🧪 Acid ka pH value hota hai **7 se kam**, jaise ki **HCl** ek strong acid hai.")
+        elif any(kiss in user_q.lower() for kiss in ["kiss", "kissing", "chumban", "चुंबन"]):
+            response = "🧠 Gyani: Chumban ya pyaar se jude sawalon ke liye aapka prashn samanya gyaan mein nahi aata, par yeh ek rochak vishay hai. Samanya roop se pyaar, samman aur sahmati par adharit sambandhon ka gyaan dena bhi zaroori hai."
+            st.success(response)
         elif api_key:
             try:
                 detected_lang = detect(user_q)
@@ -111,7 +133,7 @@ if submitted and user_q_multi:
                 }.get(detected_lang, "You are Gyani, a wise assistant who explains clearly and kindly.")
 
                 chat_response = openai.chat.completions.create(
-                    model="gpt-3.5-turbo",
+                    model="gpt-4o",
                     messages=[
                         {"role": "system", "content": sys_prompt},
                         {"role": "user", "content": user_q}
