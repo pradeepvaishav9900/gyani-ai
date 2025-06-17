@@ -108,6 +108,9 @@ if submitted and user_q_multi:
         elif any(kiss in user_q.lower() for kiss in ["kiss", "kissing", "chumban", "चुंबन"]):
             response = "🧠 Gyani: Chumban ya pyaar se jude sawalon ke liye aapka prashn samanya gyaan mein nahi aata, par yeh ek rochak vishay hai. Samanya roop se pyaar, samman aur sahmati par adharit sambandhon ka gyaan dena bhi zaroori hai."
             st.success(response)
+        elif "gyani kaun hai" in user_q.lower() or "kisne banaya" in user_q.lower():
+            response = "🧠 Gyani: Main ek AI chatbot hoon jise Pradeep Vaishnav ne banaya hai. Mera uddeshya logo ko sahayata dena aur unki gyaan ki pyaas bujhana hai."
+            st.success(response)
         else:
             response = local_chat(user_q)
             st.success("🧠 Gyani: " + response)
