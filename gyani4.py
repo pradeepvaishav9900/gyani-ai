@@ -2,15 +2,11 @@ import streamlit as st
 import PyPDF2
 import pytesseract
 from PIL import Image
-import io
-import base64
 import datetime
-import openai
-from langdetect import detect
+import requests
 
 st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_icon="🧠")
 
-# Logo and Title
 st.markdown("""
     <div style='text-align: center;'>
         <img src='https://i.imgur.com/Wr9vB2M.png' alt='Gyani Logo' width='120'/><br>
@@ -28,7 +24,6 @@ with col2:
 
 text_content = ""
 
-# Text Extraction
 def extract_text_from_pdf(file):
     reader = PyPDF2.PdfReader(file)
     text = ""
@@ -52,27 +47,15 @@ if uploaded_file is not None:
     st.success("✅ File se gyaan prapt ho gaya!")
     st.text_area("📖 Extracted Content:", text_content[:3000], height=300)
 
-# Chat History
 if 'history' not in st.session_state:
     st.session_state.history = []
 
-# OpenAI API Key
-openai.api_key = st.secrets["OPENAI_API_KEY"]
-
 def local_chat(prompt):
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are Gyani, a helpful, kind and wise AI assistant created by Pradeep Vaishnav."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-            max_tokens=1000
-        )
-        return response['choices'][0]['message']['content']
+        res = requests.post("http://localhost:11434/api/generate", json={"model": "llama3", "prompt": prompt})
+        return res.json().get("response", "❌ Gyani abhi sthir hai.")
     except Exception as e:
-        return f"⚠️ API error: {str(e)}"
+        return f"⚠️ Local model error: {str(e)}"
 
 with st.form("chat_form", clear_on_submit=True):
     cols = st.columns([8, 1])
@@ -124,7 +107,6 @@ if submitted and user_q_multi:
 
         st.session_state.history.append(("gyani", response))
 
-# Display full conversation
 st.markdown("<hr><h4>📜 Purani Baatein:</h4>", unsafe_allow_html=True)
 for speaker, msg in st.session_state.history:
     if speaker == "user":
