@@ -59,14 +59,20 @@ if 'history' not in st.session_state:
     st.session_state.history = []
 
 user_q_multi = st.text_area("🧠 Aap apne prashn yahan likhiye (ek ya adhik prashn, har prashn naye line me):")
-if user_q_multi:
+ok_clicked = st.button("🟢 OK, Gyani se poochho")
+
+if ok_clicked and user_q_multi:
     questions = [q.strip() for q in user_q_multi.split('\n') if q.strip()]
     for user_q in questions:
         st.session_state.history.append(("user", user_q))
         st.markdown(f"👤 Aapka Prashn: *{user_q}*")
         response = ""
 
-        if user_q.lower() in text_content.lower():
+        greetings = ["hello", "hi", "hlo", "ram ram", "jai shree ram", "namaste", "jai jagannath"]
+        if any(greet in user_q.lower() for greet in greetings):
+            response = "🧠 Gyani: Jai Jagannath 🙏 Aapka swagat hai! Aap kya janna chahenge?"
+            st.success(response)
+        elif user_q.lower() in text_content.lower():
             response = "🧠 Gyani: Bahut accha prashn! Haan, iska uttar mujhe aapke file me mil gaya hai. 👇"
             st.success(response)
         elif any(k in user_q.lower() for k in ["python", "java", "html", "chemistry", "physics"]):
