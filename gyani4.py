@@ -5,15 +5,15 @@ from PIL import Image
 import io
 import base64
 import datetime
-from openai import OpenAI
-from openai import OpenAIError
+import openai
+from openai.error import OpenAIError
 
 st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_icon="🧠")
 
 # Set OpenAI API key from Streamlit secrets
 api_key = st.secrets.get("OPENAI_API_KEY")
 if api_key:
-    client = OpenAI(api_key=api_key)
+    openai.api_key = api_key
 else:
     st.warning("🔐 OpenAI API key missing! Add it in .streamlit/secrets.toml")
 
@@ -82,14 +82,14 @@ if user_q:
             st.markdown("🧪 Acid ka pH value hota hai **7 se kam**, jaise ki **HCl** ek strong acid hai.")
     elif api_key:
         try:
-            chat_response = client.chat.completions.create(
+            chat_response = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": "You are Gyani, a wise assistant who explains in Hindi like a human teacher."},
                     {"role": "user", "content": user_q}
                 ]
             )
-            response = chat_response.choices[0].message.content
+            response = chat_response.choices[0].message['content']
             st.success("🧠 Gyani: " + response)
         except OpenAIError as e:
             response = "❌ Gyani abhi sthir hai. Error: " + str(e)
