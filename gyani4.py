@@ -7,16 +7,17 @@ import base64
 import datetime
 import requests
 from langdetect import detect
+from bs4 import BeautifulSoup
 
-st.set_page_config(page_title="Ballo AI - AI Assistant by Pradeep Vaishnav", page_icon="🤖")
+st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_icon="🤖")
 
 # Logo and Title
 st.markdown("""
     <div style='text-align: center;'>
-        <img src='https://i.imgur.com/Wr9vB2M.png' alt='Ballo AI Logo' width='120'/><br>
-        <h1 style='margin-top: 10px;'>🤖 Ballo AI</h1>
+        <img src='https://i.imgur.com/Wr9vB2M.png' alt='Gyani Logo' width='120'/><br>
+        <h1 style='margin-top: 10px;'>🤖 Gyani</h1>
         <h4 style='color: gray;'>Developed by Pradeep Vaishnav</h4>
-        <p style='font-size: 14px; color: #555;'>Ballo AI ek AI sahayak hai jo Pradeep Vaishnav dwara banaya gaya hai. Iska uddeshya logo ko gyaan dena aur unki samasyaon ka samadhan karna hai.</p>
+        <p style='font-size: 14px; color: #555;'>Gyani ek AI sahayak hai jo Pradeep Vaishnav dwara banaya gaya hai. Iska uddeshya logo ko gyaan dena aur unki samasyaon ka samadhan karna hai.</p>
         <p style='font-size: 13px; color: #999;'>Creator & Owner: <strong>Pradeep Vaishnav</strong></p>
     </div>
     <hr>
@@ -46,7 +47,7 @@ def extract_text_from_image(file):
 
 if uploaded_file is not None:
     file_type = uploaded_file.type
-    with st.spinner("📚 Ballo AI file ka vishleshan kar raha hai..."):
+    with st.spinner("📚 Gyani file ka vishleshan kar raha hai..."):
         if file_type == "application/pdf":
             text_content = extract_text_from_pdf(uploaded_file)
         elif "image" in file_type:
@@ -59,8 +60,22 @@ if uploaded_file is not None:
 if 'history' not in st.session_state:
     st.session_state.history = []
 
+def google_search_answer(query):
+    try:
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        res = requests.get(f"https://www.google.com/search?q={query}", headers=headers)
+        soup = BeautifulSoup(res.text, 'html.parser')
+
+        answer = soup.find("div", class_="BNeawe s3v9rd AP7Wnd")
+        if answer:
+            return answer.get_text()
+        else:
+            return "Maaf kijiye, mujhe Google se sahi uttar nahi mila."
+    except:
+        return "Internet ya Google access mein kuch samasya hai."
+
 def local_chat(prompt):
-    return "🔒 Ballo AI ka AI engine filhal offline hai. OpenAI key ki jarurat hai advance uttar ke liye."
+    return "🔒 Gyani ka AI engine filhal offline hai. OpenAI key ki jarurat hai advance uttar ke liye."
 
 with st.form("chat_form", clear_on_submit=True):
     cols = st.columns([8, 1])
@@ -78,14 +93,14 @@ if submitted and user_q_multi:
 
         greetings = ["hello", "hi", "hlo", "ram ram", "jai shree ram", "namaste", "jai jagannath"]
         if any(greet in user_q.lower() for greet in greetings):
-            response = "🤖 Ballo AI: Jai Jagannath 🙏 Aapka swagat hai! Aap kya janna chahenge?"
+            response = "🤖 Gyani: Jai Jagannath 🙏 Aapka swagat hai! Aap kya janna chahenge?"
             st.success(response)
         elif user_q.lower() in text_content.lower():
-            response = "🤖 Ballo AI: Bahut accha prashn! Haan, iska uttar mujhe aapke file me mil gaya hai. 👇"
+            response = "🤖 Gyani: Bahut accha prashn! Haan, iska uttar mujhe aapke file me mil gaya hai. 👇"
             st.success(response)
         elif any(k in user_q.lower() for k in ["python", "java", "html", "c++", "javascript", "c language"]):
             if any(x in user_q.lower() for x in ["code", "program", "likho", "likhna", "bana"]):
-                st.markdown("🤖 Ballo AI: Aapne coding ka prashn kiya hai. Filhal advanced coding AI disabled hai (OpenAI API key chahiye).")
+                st.markdown("🤖 Gyani: Aapne coding ka prashn kiya hai. Filhal advanced coding AI disabled hai (OpenAI API key chahiye).")
                 st.info("Lekin main kuch basic udaharan de raha hoon:")
                 if "python" in user_q.lower():
                     st.code("for i in range(5):\n    print(i)", language="python")
@@ -100,22 +115,22 @@ if submitted and user_q_multi:
                 elif "c language" in user_q.lower():
                     st.code("#include<stdio.h>\nint main() {\n printf(\"Hello\");\n return 0;\n}", language="c")
             else:
-                response = "🤖 Ballo AI: Yeh technical coding ya vishay sambandhit prashn hai. Basic code niche diya gaya hai."
+                response = "🤖 Gyani: Yeh technical coding ya vishay sambandhit prashn hai. Basic code niche diya gaya hai."
                 st.info(response)
         elif "cbse syllabus" in user_q.lower():
-            response = "🤖 Ballo AI: Yeh raha CBSE board ka Class 1 se 12 tak ka syllabus summary link 👇\n👉 https://cbseacademic.nic.in/curriculum_2025.html"
+            response = "🤖 Gyani: Yeh raha CBSE board ka Class 1 se 12 tak ka syllabus summary link 👇\n👉 https://cbseacademic.nic.in/curriculum_2025.html"
             st.success(response)
         elif any(kiss in user_q.lower() for kiss in ["kiss", "kissing", "chumban", "चुंबन"]):
-            response = "🤖 Ballo AI: Chumban ya pyaar se jude sawalon ke liye aapka prashn samanya gyaan mein nahi aata, par yeh ek rochak vishay hai. Samanya roop se pyaar, samman aur sahmati par adharit sambandhon ka gyaan dena bhi zaroori hai."
+            response = "🤖 Gyani: Chumban ya pyaar se jude sawalon ke liye aapka prashn samanya gyaan mein nahi aata, par yeh ek rochak vishay hai. Samanya roop se pyaar, samman aur sahmati par adharit sambandhon ka gyaan dena bhi zaroori hai."
             st.success(response)
-        elif "ballo ai kaun hai" in user_q.lower() or "kisne banaya" in user_q.lower():
-            response = "🤖 Ballo AI: Main ek AI chatbot hoon jise Pradeep Vaishnav ne banaya hai. Mera uddeshya logo ko sahayata dena aur unki gyaan ki pyaas bujhana hai."
+        elif "gyani kaun hai" in user_q.lower() or "kisne banaya" in user_q.lower() or "ballo ai kaun hai" in user_q.lower():
+            response = "🤖 Gyani: Main ek AI chatbot hoon jise Pradeep Vaishnav ne banaya hai. Mera uddeshya logo ko sahayata dena aur unki gyaan ki pyaas bujhana hai."
             st.success(response)
         else:
-            response = local_chat(user_q)
-            st.success("🤖 Ballo AI: " + response)
+            response = google_search_answer(user_q)
+            st.success("🤖 Gyani: " + response)
 
-        st.session_state.history.append(("ballo", response))
+        st.session_state.history.append(("gyani", response))
 
 # Display full conversation
 st.markdown("<hr><h4>📜 Purani Baatein:</h4>", unsafe_allow_html=True)
@@ -123,12 +138,12 @@ for speaker, msg in st.session_state.history:
     if speaker == "user":
         st.markdown(f"👤 **User**: {msg}")
     else:
-        st.markdown(f"🤖 **Ballo AI**: {msg}")
+        st.markdown(f"🤖 **Gyani**: {msg}")
 
 st.markdown("""
     <hr>
     <div style='text-align: center; color: gray;'>
-        🤖 <strong>Ballo AI</strong> Chatbot ka nirmaan <strong>Pradeep Vaishnav</strong> dwara kiya gaya hai.<br>
+        🤖 <strong>Gyani</strong> Chatbot ka nirmaan <strong>Pradeep Vaishnav</strong> dwara kiya gaya hai.<br>
         Iska uddeshya logo ko gyaan dena aur unki samasyaon ka samadhan karna hai.<br>
         Jai Jagannath 🙏
     </div>
