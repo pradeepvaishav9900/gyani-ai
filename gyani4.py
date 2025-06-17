@@ -8,6 +8,7 @@ import datetime
 import requests
 from langdetect import detect
 from bs4 import BeautifulSoup
+import wikipedia
 
 st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_icon="🤖")
 
@@ -81,9 +82,12 @@ def google_search_answer(query):
         if paragraphs:
             return paragraphs[0].get_text()
 
-        return "Maaf kijiye, mujhe Google se sahi uttar nahi mila."
+        # Try Wikipedia as fallback
+        summary = wikipedia.summary(query, sentences=2, auto_suggest=True, redirect=True)
+        return summary
+
     except Exception as e:
-        return f"Internet ya Google access mein kuch samasya hai: {str(e)}"
+        return f"❌ Maaf kijiye, kuch samasya aayi hai: {str(e)}"
 
 def local_chat(prompt):
     return None
