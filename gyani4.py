@@ -9,6 +9,7 @@ import requests
 from langdetect import detect
 from bs4 import BeautifulSoup
 import wikipedia
+from wikipedia.exceptions import PageError, DisambiguationError
 
 st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_icon="🤖")
 
@@ -83,14 +84,17 @@ def google_search_answer(query):
             return paragraphs[0].get_text()
 
         # Try Wikipedia as fallback
-        summary = wikipedia.summary(query, sentences=2, auto_suggest=True, redirect=True)
-        return summary
+        try:
+            summary = wikipedia.summary(query, sentences=2, auto_suggest=True, redirect=True)
+            return summary
+        except (PageError, DisambiguationError):
+            return "❌ Maaf kijiye, mujhe Google se sahi uttar nahi mila."
 
     except Exception as e:
         return f"❌ Maaf kijiye, kuch samasya aayi hai: {str(e)}"
 
 def local_chat(prompt):
-    return None
+    return "🧠 Gyani ka AI engine filhal offline hai. OpenAI key ki jarurat hai."
 
 with st.form("chat_form", clear_on_submit=True):
     cols = st.columns([8, 1])
@@ -112,7 +116,7 @@ if submitted and user_q_multi:
         elif user_q.lower() in text_content.lower():
             response = "🤖 Gyani: Bahut accha prashn! Haan, iska uttar mujhe aapke file me mil gaya hai. 👇"
         elif any(k in user_q.lower() for k in ["python", "java", "html", "c++", "javascript", "c language"]):
-            response = "🤖 Gyani: Aapne coding ka prashn kiya hai. Filhal advanced coding AI disabled hai (OpenAI API key chahiye)."
+            response = local_chat(user_q)
         elif "cbse syllabus" in user_q.lower():
             response = "🤖 Gyani: Yeh raha CBSE board ka Class 1 se 12 tak ka syllabus summary link 👇\n👉 https://cbseacademic.nic.in/curriculum_2025.html"
         elif any(kiss in user_q.lower() for kiss in ["kiss", "kissing", "chumban", "चुंबन"]):
