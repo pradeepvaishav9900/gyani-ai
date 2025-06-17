@@ -58,10 +58,11 @@ if uploaded_file is not None:
 if 'history' not in st.session_state:
     st.session_state.history = []
 
-user_q_multi = st.text_area("🧠 Aap apne prashn yahan likhiye (ek ya adhik prashn, har prashn naye line me):")
-ok_clicked = st.button("🟢 OK, Gyani se poochho")
+with st.form("chat_form", clear_on_submit=True):
+    user_q_multi = st.text_area("🧠 Aap apne prashn yahan likhiye (ek ya adhik prashn, har prashn naye line me):")
+    submitted = st.form_submit_button("🟢 OK")
 
-if ok_clicked and user_q_multi:
+if submitted and user_q_multi:
     questions = [q.strip() for q in user_q_multi.split('\n') if q.strip()]
     for user_q in questions:
         st.session_state.history.append(("user", user_q))
