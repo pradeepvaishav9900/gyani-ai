@@ -2,7 +2,8 @@ streamlit
 PyPDF2
 pytesseract
 Pillow
-requests
-beautifulsoup4
 langdetect
+beautifulsoup4
 wikipedia
+openai
+requests
