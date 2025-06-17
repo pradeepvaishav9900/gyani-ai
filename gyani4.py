@@ -7,6 +7,7 @@ import base64
 import datetime
 import openai
 from openai._exceptions import OpenAIError
+from langdetect import detect
 
 st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_icon="🧠")
 
@@ -27,7 +28,13 @@ st.markdown("""
     <hr>
 """, unsafe_allow_html=True)
 
-uploaded_file = st.file_uploader("📤 File Upload karein (PDF ya Image):", type=["pdf", "png", "jpg", "jpeg"])
+col1, col2 = st.columns([8, 1])
+with col1:
+    uploaded_file = st.file_uploader("", type=["pdf", "png", "jpg", "jpeg"], label_visibility="collapsed")
+with col2:
+    st.markdown("<div style='text-align: right; font-size: 22px;'>➕</div>", unsafe_allow_html=True)
+
+text_content = ""
 
 def extract_text_from_pdf(file):
     reader = PyPDF2.PdfReader(file)
@@ -40,8 +47,6 @@ def extract_text_from_image(file):
     image = Image.open(file)
     text = pytesseract.image_to_string(image)
     return text
-
-text_content = ""
 
 if uploaded_file is not None:
     file_type = uploaded_file.type
@@ -59,8 +64,11 @@ if 'history' not in st.session_state:
     st.session_state.history = []
 
 with st.form("chat_form", clear_on_submit=True):
-    user_q_multi = st.text_area("🧠 Aap apne prashn yahan likhiye (ek ya adhik prashn, har prashn naye line me):")
-    submitted = st.form_submit_button("🟢 OK")
+    cols = st.columns([8, 1])
+    with cols[0]:
+        user_q_multi = st.text_area("", key="chat_input", placeholder="🧠 Aap apne prashn yahan likhiye (Enter se bhejein)...")
+    with cols[1]:
+        submitted = st.form_submit_button("↵")
 
 if submitted and user_q_multi:
     questions = [q.strip() for q in user_q_multi.split('\n') if q.strip()]
@@ -91,10 +99,21 @@ if submitted and user_q_multi:
                 st.markdown("🧪 Acid ka pH value hota hai **7 se kam**, jaise ki **HCl** ek strong acid hai.")
         elif api_key:
             try:
+                detected_lang = detect(user_q)
+                sys_prompt = {
+                    'hi': "You are Gyani, a wise assistant who explains in Hindi like a human teacher.",
+                    'en': "You are Gyani, a wise assistant who explains in simple English.",
+                    'pa': "You are Gyani, a wise assistant who explains in Punjabi.",
+                    'gu': "You are Gyani, a wise assistant who explains in Gujarati.",
+                    'bho': "You are Gyani, a wise assistant who explains in Bhojpuri.",
+                    'mr': "You are Gyani, a wise assistant who explains in Marathi.",
+                    'bn': "You are Gyani, a wise assistant who explains in Bengali."
+                }.get(detected_lang, "You are Gyani, a wise assistant who explains clearly and kindly.")
+
                 chat_response = openai.chat.completions.create(
                     model="gpt-3.5-turbo",
                     messages=[
-                        {"role": "system", "content": "You are Gyani, a wise assistant who explains in Hindi like a human teacher."},
+                        {"role": "system", "content": sys_prompt},
                         {"role": "user", "content": user_q}
                     ]
                 )
@@ -105,6 +124,9 @@ if submitted and user_q_multi:
                     response = "❌ Gyani abhi sthir hai. Aapka OpenAI quota samapt ho chuka hai. Naye API key ya billing details check karein."
                 else:
                     response = "❌ Gyani abhi sthir hai. Error: " + str(e)
+                st.error(response)
+            except Exception as e:
+                response = "⚠️ Koi samasya hui: " + str(e)
                 st.error(response)
         else:
             response = "🧠 Gyani: Mujhe khed hai, yeh prashn mujhe file me ya mere gyaan me nahi mila. Par main aur seekh raha hoon – aap mujhe naye sawal poochhte rahiye! 🙏"
