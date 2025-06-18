@@ -1,7 +1,7 @@
 import streamlit as st
 import PyPDF2
 import pytesseract
-from PIL import Image
+from PIL import Image, ImageFilter
 import datetime
 import openai
 import os
@@ -20,15 +20,44 @@ st.markdown("""
     <hr>
 """, unsafe_allow_html=True)
 
+# Image Upload and Editing
+st.header("🖼️ Image Editing")
+uploaded_image = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
+
+if uploaded_image is not None:
+    # Open the image
+    image = Image.open(uploaded_image)
+    st.image(image, caption="Original Image", use_column_width=True)
+
+    # Image Editing Options
+    st.subheader("Edit Your Image")
+    edit_option = st.selectbox("Choose an editing option", ["None", "Resize", "Blur", "Enhance"])
+
+    if edit_option == "Resize":
+        width = st.number_input("Width", min_value=1, value=image.width)
+        height = st.number_input("Height", min_value=1, value=image.height)
+        if st.button("Resize Image"):
+            resized_image = image.resize((width, height))
+            st.image(resized_image, caption="Resized Image", use_column_width=True)
+
+    elif edit_option == "Blur":
+        if st.button("Apply Blur"):
+            blurred_image = image.filter(ImageFilter.BLUR)
+            st.image(blurred_image, caption="Blurred Image", use_column_width=True)
+
+    elif edit_option == "Enhance":
+        if st.button("Enhance Image"):
+            enhanced_image = image.filter(ImageFilter.SHARPEN)
+            st.image(enhanced_image, caption="Enhanced Image", use_column_width=True)
+
+# Text Extraction
 col1, col2 = st.columns([8, 1])
 with col1:
-    uploaded_file = st.file_uploader("", type=["pdf", "png", "jpg", "jpeg"], label_visibility="collapsed")
+    uploaded_file = st.file_uploader("Upload a PDF or Image for Text Extraction", type=["pdf", "png", "jpg", "jpeg"], label_visibility="collapsed")
 with col2:
     st.markdown("<div style='text-align: right; font-size: 22px;'>➕</div>", unsafe_allow_html=True)
 
 text_content = ""
-
-# Text Extraction
 
 def extract_text_from_pdf(file):
     reader = PyPDF2.PdfReader(file)
@@ -111,7 +140,7 @@ if submitted and user_q_multi:
 st.markdown("<hr><h4>📜 Purani Baatein:</h4>", unsafe_allow_html=True)
 for speaker, msg in st.session_state.history:
     if speaker == "user":
-        st.markdown(f"👤 **User     **: {msg}")
+        st.markdown(f"👤 **User      **: {msg}")
     else:
         st.markdown(f"🤖 **Gyani**: {msg}")
 
