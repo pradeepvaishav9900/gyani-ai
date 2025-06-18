@@ -66,7 +66,7 @@ if 'history' not in st.session_state:
 
 def google_search_answer(query):
     try:
-        headers = {'User -Agent': 'Mozilla/5.0'}
+        headers = {'User  -Agent': 'Mozilla/5.0'}
         res = requests.get(f"https://www.google.com/search?q={query}", headers=headers)
         soup = BeautifulSoup(res.text, 'html.parser')
 
@@ -118,12 +118,12 @@ def generate_response(user_q):
     user_q = user_q.lower()
 
     # Handle casual conversational prompts
-    conversational_prompts = ["or batao", "kya ho raha hai", "kya chal raha hai", "kya naya hai", "kya haal hai", "kya scene hai"]
+    conversational_prompts = ["or batao", "kya ho raha hai", "kya chal raha hai", "kya naya hai", "kya haal hai", "kya scene hai", "kesa hai", "kese ho", "kya haal chaal hai"]
     if any(prompt in user_q for prompt in conversational_prompts):
-        return "🤖 Gyani: Sab kuch theek hai! Aapko kya jaanana hai? Kya aap kisi vishay par baat karna chahenge?"
+        return "🤖 Gyani: Main theek hoon, dhanyavaad! Aap kaise hain? Kya aapko kisi vishay par baat karni hai?"
 
     # Handle greetings and casual inquiries
-    greetings = ["hello", "hi", "kese ho", "kaise ho", "ram ram", "jai shree ram", "namaste", "jai jagannath"]
+    greetings = ["hello", "hi", "ram ram", "jai shree ram", "namaste", "jai jagannath"]
     if any(greet in user_q for greet in greetings):
         return "🤖 Gyani: Main theek hoon, dhanyavaad! Aap kaise hain? Kya aapko kisi vishay par madad chahiye?"
 
@@ -159,7 +159,7 @@ if submitted and user_q_multi:
 st.markdown("<hr><h4>📜 Purani Baatein:</h4>", unsafe_allow_html=True)
 for speaker, msg in st.session_state.history:
     if speaker == "user":
-        st.markdown(f"👤 **User **: {msg}")
+        st.markdown(f"👤 **User  **: {msg}")
     else:
         st.markdown(f"🤖 **Gyani**: {msg}")
 
