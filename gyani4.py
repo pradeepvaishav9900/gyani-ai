@@ -66,7 +66,7 @@ if 'history' not in st.session_state:
 
 def google_search_answer(query):
     try:
-        headers = {'User  -Agent': 'Mozilla/5.0'}
+        headers = {'User -Agent': 'Mozilla/5.0'}
         res = requests.get(f"https://www.google.com/search?q={query}", headers=headers)
         soup = BeautifulSoup(res.text, 'html.parser')
 
@@ -118,9 +118,12 @@ def generate_response(user_q):
     user_q = user_q.lower()
 
     # Handle casual conversational prompts
-    conversational_prompts = ["or batao", "kya ho raha hai", "kya chal raha hai", "kya naya hai", "kya haal hai", "kya scene hai", "kesa hai", "kese ho", "kya haal chaal hai"]
+    conversational_prompts = [
+        "or batao", "kya ho raha hai", "kya chal raha hai", "kya naya hai", 
+        "kya haal hai", "kya scene hai", "kesa hai", "kese ho", "kya haal chaal hai"
+    ]
     if any(prompt in user_q for prompt in conversational_prompts):
-        return "🤖 Gyani: Main theek hoon, dhanyavaad! Aap kaise hain? Kya aapko kisi vishay par baat karni hai?"
+        return "🤖 Gyani: Main theek hoon, dhanyavaad! Aap kaise hain? Aapko kya jaanana hai?"
 
     # Handle greetings and casual inquiries
     greetings = ["hello", "hi", "ram ram", "jai shree ram", "namaste", "jai jagannath"]
