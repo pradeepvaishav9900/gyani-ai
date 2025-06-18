@@ -23,7 +23,7 @@ uploaded_image = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"]
 
 if uploaded_image is not None:
     # Open the image
-    image = Image.open(uploaded_image)
+    image = Image.open(uploaded_image).convert("RGBA")
     st.image(image, caption="Original Image", use_column_width=True)
 
     # User input for editing instructions
@@ -57,9 +57,12 @@ if uploaded_image is not None:
         # Change background color
         if bg_color:
             # Create a new image with the specified background color
-            background = Image.new('RGB', edited_image.size, bg_color)
+            background = Image.new('RGBA', edited_image.size, bg_color)
             # Composite the edited image on top of the background
-            edited_image = Image.alpha_composite(background.convert('RGBA'), edited_image.convert('RGBA')).convert('RGB')
+            edited_image = Image.alpha_composite(background, edited_image)
+
+        # Convert back to RGB for display
+        edited_image = edited_image.convert("RGB")
 
         # Display the edited image
         st.image(edited_image, caption="Edited Image", use_column_width=True)
