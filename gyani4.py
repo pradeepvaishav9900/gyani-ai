@@ -1,136 +1,153 @@
 import streamlit as st
-from PIL import Image, ImageFilter
-import cv2
-import numpy as np
-import tempfile
-import os
+import PyPDF2
+import pytesseract
+from PIL import Image
+import io
+import base64
+import datetime
+import requests
+from langdetect import detect
 
-st.set_page_config(page_title="Gyani - Photo & Video Editing App", page_icon="🖼️")
+st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_icon="🧠")
 
-# Title with styling
+# Logo and Title
 st.markdown("""
-    <h1 style='text-align: center; color: #4B0082; font-family: "Times New Roman", Times, serif;'>
-        🖼️ Gyani - Photo & Video Editing App
-    </h1>
-    <h3 style='text-align: center; color: #6A5ACD; font-family: "Georgia", serif;'>
-        Developed by Pradeep Vaishnav
-    </h3>
+    <div style='text-align: center;'>
+        <img src='https://i.imgur.com/Wr9vB2M.png' alt='Gyani Logo' width='120'/><br>
+        <h1 style='margin-top: 10px;'>🧠 Gyani</h1>
+        <h4 style='color: gray;'>Developed by Pradeep Vaishnav</h4>
+        <p style='font-size: 14px; color: #555;'>Gyani ek AI sahayak hai jo Pradeep Vaishnav dwara banaya gaya hai. Iska uddeshya logo ko gyaan dena aur unki samasyaon ka samadhan karna hai.</p>
+        <p style='font-size: 13px; color: #999;'>Creator & Owner: <strong>Pradeep Vaishnav</strong></p>
+    </div>
+    <hr>
 """, unsafe_allow_html=True)
 
-# Image Editing Section
-st.header("Image Editing")
-uploaded_image = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
+col1, col2 = st.columns([8, 1])
+with col1:
+    uploaded_file = st.file_uploader("", type=["pdf", "png", "jpg", "jpeg"], label_visibility="collapsed")
+with col2:
+    st.markdown("<div style='text-align: right; font-size: 22px;'>➕</div>", unsafe_allow_html=True)
 
-if uploaded_image is not None:
-    # Open the image
-    image = Image.open(uploaded_image).convert("RGBA")
-    st.image(image, caption="Original Image", use_column_width=True)
+text_content = ""
 
-    # User input for editing instructions
-    user_instruction = st.text_input("Enter your editing request (e.g., 'blur', 'enhance', 'resize to 300x200')")
+# Text Extraction
 
-    # Background color selection
-    bg_color = st.color_picker("Choose a background color", "#FFFFFF")
+def extract_text_from_pdf(file):
+    reader = PyPDF2.PdfReader(file)
+    text = ""
+    for page in reader.pages:
+        text += page.extract_text()
+    return text
 
-    if st.button("Edit Image"):
-        edited_image = image  # Start with the original image
+def extract_text_from_image(file):
+    image = Image.open(file)
+    text = pytesseract.image_to_string(image)
+    return text
 
-        # Process user instructions
-        if "blur" in user_instruction.lower():
-            edited_image = image.filter(ImageFilter.BLUR)
-            st.success("Image has been blurred.")
-        elif "enhance" in user_instruction.lower():
-            edited_image = image.filter(ImageFilter.SHARPEN)
-            st.success("Image has been enhanced.")
-        elif "resize" in user_instruction.lower():
-            # Extract dimensions from the user input
-            dimensions = user_instruction.lower().split("resize to")[-1].strip()
-            try:
-                width, height = map(int, dimensions.split('x'))
-                edited_image = image.resize((width, height))
-                st.success(f"Image has been resized to {width}x{height}.")
-            except ValueError:
-                st.warning("Please specify the dimensions in the format 'width x height' (e.g., '300x200').")
+if uploaded_file is not None:
+    file_type = uploaded_file.type
+    with st.spinner("📚 Gyani file ka vishleshan kar raha hai..."):
+        if file_type == "application/pdf":
+            text_content = extract_text_from_pdf(uploaded_file)
+        elif "image" in file_type:
+            text_content = extract_text_from_image(uploaded_file)
+
+    st.success("✅ File se gyaan prapt ho gaya!")
+    st.text_area("📖 Extracted Content:", text_content[:3000], height=300)
+
+# Chat History
+if 'history' not in st.session_state:
+    st.session_state.history = []
+
+def local_chat(prompt):
+    return "🔒 Gyani ka AI engine filhal offline hai. OpenAI key ki jarurat hai advance uttar ke liye."
+
+with st.form("chat_form", clear_on_submit=True):
+    cols = st.columns([8, 1])
+    with cols[0]:
+        user_q_multi = st.text_area("", key="chat_input", placeholder="🧠 Aap apne prashn yahan likhiye (Enter se bhejein)...")
+    with cols[1]:
+        submitted = st.form_submit_button("↵")
+
+if submitted and user_q_multi:
+    questions = [q.strip() for q in user_q_multi.split('\n') if q.strip()]
+    for user_q in questions:
+        st.session_state.history.append(("user", user_q))
+        st.markdown(f"👤 Aapka Prashn: *{user_q}*")
+        response = ""
+
+        greetings = ["hello", "hi", "hlo", "ram ram", "jai shree ram", "namaste", "jai jagannath"]
+        if any(greet in user_q.lower() for greet in greetings):
+            response = "🧠 Gyani: Jai Jagannath 🙏 Aapka swagat hai! Aap kya janna chahenge?"
+            st.success(response)
+        elif user_q.lower() in text_content.lower():
+            response = "🧠 Gyani: Bahut accha prashn! Haan, iska uttar mujhe aapke file me mil gaya hai. 👇"
+            st.success(response)
+        elif any(k in user_q.lower() for k in ["python", "java", "html", "c++", "javascript", "c language"]):
+            if any(x in user_q.lower() for x in ["code", "program", "likho", "likhna", "bana"]):
+                st.markdown("🧠 Gyani: Aapne coding ka prashn kiya hai. Filhal advanced coding AI disabled hai (OpenAI API key chahiye).")
+                st.info("Lekin main kuch basic udaharan de raha hoon:")
+                if "python" in user_q.lower():
+                    st.code("for i in range(5):\n    print(i)", language="python")
+                elif "java" in user_q.lower():
+                    st.code("public class Main {\n public static void main(String[] args) {\n  System.out.println(\"Hello\");\n }\n}", language="java")
+                elif "html" in user_q.lower():
+                    st.code("<html><body>Hello</body></html>", language="html")
+                elif "c++" in user_q.lower():
+                    st.code("#include<iostream>\nusing namespace std;\nint main() {\n cout << \"Hello\";\n return 0;\n}", language="cpp")
+                elif "javascript" in user_q.lower():
+                    st.code("console.log('Hello World');", language="javascript")
+                elif "c language" in user_q.lower():
+                    st.code("#include<stdio.h>\nint main() {\n printf(\"Hello\");\n return 0;\n}", language="c")
+            else:
+                response = "🧠 Gyani: Yeh technical coding ya vishay sambandhit prashn hai. Basic code niche diya gaya hai."
+                st.info(response)
+        elif "cbse syllabus" in user_q.lower():
+            response = "🧠 Gyani: Yeh raha CBSE board ka Class 1 se 12 tak ka syllabus summary link 👇\n👉 https://cbseacademic.nic.in/curriculum_2025.html"
+            st.success(response)
+        elif any(kiss in user_q.lower() for kiss in ["kiss", "kissing", "chumban", "चुंबन"]):
+            response = "🧠 Gyani: Chumban ya pyaar se jude sawalon ke liye aapka prashn samanya gyaan mein nahi aata, par yeh ek rochak vishay hai. Samanya roop se pyaar, samman aur sahmati par adharit sambandhon ka gyaan dena bhi zaroori hai."
+            st.success(response)
+        elif "gyani kaun hai" in user_q.lower() or "kisne banaya" in user_q.lower():
+            response = "🧠 Gyani: Main ek AI chatbot hoon jise Pradeep Vaishnav ne banaya hai. Mera uddeshya logo ko sahayata dena aur unki gyaan ki pyaas bujhana hai."
+            st.success(response)
         else:
-            st.warning("Sorry, I can't process that request. Please try another.")
+            response = local_chat(user_q)
+            st.success("🧠 Gyani: " + response)
 
-        # Change background color
-        if bg_color:
-            # Create a new image with the specified background color
-            background = Image.new('RGBA', edited_image.size, bg_color)
-            # Composite the edited image on top of the background
-            edited_image = Image.alpha_composite(background, edited_image)
+        st.session_state.history.append(("gyani", response))
 
-        # Convert back to RGB for display
-        edited_image = edited_image.convert("RGB")
+# Display full conversation
+st.markdown("<hr><h4>📜 Purani Baatein:</h4>", unsafe_allow_html=True)
+for speaker, msg in st.session_state.history:
+    if speaker == "user":
+        st.markdown(f"👤 **User**: {msg}")
+    else:
+        st.markdown(f"🧠 **Gyani**: {msg}")
 
-        # Display the edited image
-        st.image(edited_image, caption="Edited Image", use_column_width=True)
-
-# Video Editing Section
-st.header("Video Editing")
-uploaded_video = st.file_uploader("Upload a video", type=["mp4", "mov", "avi"])
-
-if uploaded_video is not None:
-    # Save the uploaded video to a temporary file
-    tfile = tempfile.NamedTemporaryFile(delete=False)
-    tfile.write(uploaded_video.read())
-    video_path = tfile.name
-
-    # Display the video
-    st.video(video_path)
-
-    # User input for video editing instructions
-    user_video_instruction = st.text_input("Enter your video editing request (e.g., 'trim from 10 to 20 seconds')")
-
-    if st.button("Edit Video"):
-        if "trim" in user_video_instruction.lower():
-            # Extract trim start and end times from the user input
-            try:
-                times = user_video_instruction.lower().split("trim from")[-1].strip()
-                start_time, end_time = map(int, times.split("to"))
-                
-                # Load the video using OpenCV
-                cap = cv2.VideoCapture(video_path)
-                fps = cap.get(cv2.CAP_PROP_FPS)
-                start_frame = int(start_time * fps)
-                end_frame = int(end_time * fps)
-
-                # Create a VideoWriter object
-                output_path = os.path.join(tempfile.gettempdir(), "trimmed_video.mp4")
-                fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-                out = cv2.VideoWriter(output_path, fourcc, fps, (int(cap.get(3)), int(cap.get(4))))
-
-                # Read and write frames
-                current_frame = 0
-                while cap.isOpened():
-                    ret, frame = cap.read()
-                    if not ret:
-                        break
-                    if start_frame <= current_frame <= end_frame:
-                        out.write(frame)
-                    current_frame += 1
-
-                cap.release()
-                out.release()
-
-                # Display the trimmed video
-                st.video(output_path)
-                st.success(f"Video has been trimmed from {start_time} to {end_time} seconds.")
-            except ValueError:
-                st.warning("Please specify the trim times in the format 'trim from start to end' (e.g., 'trim from 10 to 20').")
-        else:
-            st.warning("Sorry, I can't process that request. Please try another.")
-
-# Clean up temporary files
-if uploaded_video is not None:
-    os.remove(video_path)
-
-# Footer
 st.markdown("""
     <hr>
     <div style='text-align: center; color: gray;'>
-        🤖 <strong>Gyani</strong> - Photo & Video Editing App developed by <strong>Pradeep Vaishnav</strong>.<br>
-        All rights reserved. 🙏
+        🤖 <strong>Gyani</strong> Chatbot ka nirmaan <strong>Pradeep Vaishnav</strong> dwara kiya gaya hai.<br>
+        Iska uddeshya logo ko gyaan dena aur unki samasyaon ka samadhan karna hai.<br>
+        Jai Jagannath 🙏
     </div>
 """, unsafe_allow_html=True)
+
+st.markdown("""
+    <div style='margin-top:30px;'>
+        <h4>📝 Aap yeh prashn bhi pooch sakte hain:</h4>
+        <ul>
+            <li>Python me loop kaise chalta hai?</li>
+            <li>Newton ka pehla niyam kya hai?</li>
+            <li>HTML ka basic structure kya hota hai?</li>
+            <li>Is file me syllabus hai kya?</li>
+            <li>Java me factorial kaise likhen?</li>
+            <li>CBSE syllabus class 6 science</li>
+            <li>Class 10 Maths syllabus CBSE</li>
+            <li>12th Physics important topics CBSE</li>
+        </ul>
+    </div>
+""", unsafe_allow_html=True)
+
+st.markdown(f"<p style='text-align: right; font-size: small; color: gray;'>🕒 {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>", unsafe_allow_html=True)
