@@ -1,31 +1,29 @@
-# STEP 1: Install required packages
-!pip install transformers gradio
-
-# STEP 2: Load FLAN-T5-Large model
-from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 import gradio as gr
+from transformers import pipeline
 
-model_name = "google/flan-t5-large"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+# Hinglish chatbot model (lightweight)
+chatbot_model = pipeline("text-generation", model="rinna/bilingual-gpt-neox-4b")
 
-def generate_response(prompt):
-    inputs = tokenizer(prompt, return_tensors="pt")
-    outputs = model.generate(**inputs, max_length=256)
-    return tokenizer.decode(outputs[0], skip_special_tokens=True)
-
-# STEP 3: Gradio Chat Interface
-def chat_fn(user_input, chat_history):
-    response = generate_response(user_input)
-    chat_history = chat_history or []
-    chat_history.append((user_input, response))
-    return chat_history, chat_history
+def chatbot_response(message):
+    result = chatbot_model(message, max_new_tokens=100, do_sample=True, temperature=0.7)[0]['generated_text']
+    return f"🧠 Gyani: {result[len(message):].strip()}"
 
 with gr.Blocks() as demo:
-    gr.Markdown("## 🧠 Gyani Lite (T4 GPU Compatible)")
+    gr.Markdown("""
+    # 🤖 Gyani - Hinglish Chatbot  
+    Developed by **Pradeep Vaishnav**
+    """)
+
     chatbot = gr.Chatbot()
-    msg = gr.Textbox(placeholder="Gyani se kuch bhi poochho...")
-    state = gr.State()
-    msg.submit(chat_fn, [msg, state], [chatbot, state])
-    msg.submit(lambda: "", None, msg)
-    demo.launch(share=True)
+    msg = gr.Textbox(placeholder="💬 Ask your question in Hinglish...")
+    clear = gr.Button("🧹 Clear Chat")
+
+    def user(message, history):
+        response = chatbot_response(message)
+        history.append((message, response))
+        return "", history
+
+    msg.submit(user, [msg, chatbot], [msg, chatbot])
+    clear.click(lambda: None, None, chatbot, queue=False)
+
+demo.launch()
