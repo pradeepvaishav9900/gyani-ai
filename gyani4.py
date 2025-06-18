@@ -1,53 +1,31 @@
-import streamlit as st
-import requests
-import datetime
+# STEP 1: Install required packages
+!pip install transformers gradio
 
-st.set_page_config(page_title="Gyani - Local AI Chatbot", page_icon="🧠")
+# STEP 2: Load FLAN-T5-Large model
+from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+import gradio as gr
 
-st.markdown("""
-    <div style='text-align: center;'>
-        <h1>🧠 Gyani</h1>
-        <h4 style='color: gray;'>Developed by Pradeep Vaishnav</h4>
-        <p style='font-size: 14px; color: #555;'>Gyani ek AI chatbot hai jo ab bina OpenAI key ke bhi chal sakta hai – local AI model se!</p>
-    </div>
-    <hr>
-""", unsafe_allow_html=True)
+model_name = "google/flan-t5-large"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
 
-# Chat history
-if "history" not in st.session_state:
-    st.session_state.history = []
+def generate_response(prompt):
+    inputs = tokenizer(prompt, return_tensors="pt")
+    outputs = model.generate(**inputs, max_length=256)
+    return tokenizer.decode(outputs[0], skip_special_tokens=True)
 
-# 💬 Function to talk to Local AI via Ollama
-def local_chat(prompt):
-    try:
-        res = requests.post(
-            "http://localhost:11434/api/generate",
-            json={"model": "mistral", "prompt": prompt, "stream": False}
-        )
-        if res.status_code == 200:
-            return res.json()["response"]
-        else:
-            return "⚠️ Gyani: Local model se jawaab nahi mila."
-    except Exception as e:
-        return f"⚠️ Gyani Error: {str(e)}"
+# STEP 3: Gradio Chat Interface
+def chat_fn(user_input, chat_history):
+    response = generate_response(user_input)
+    chat_history = chat_history or []
+    chat_history.append((user_input, response))
+    return chat_history, chat_history
 
-# Chat Input
-with st.form("chat_form", clear_on_submit=True):
-    user_input = st.text_area("👤 Aapka Prashn:", placeholder="Gyani se kuch bhi poochho...", key="input")
-    submitted = st.form_submit_button("📨 Bhej do")
-
-if submitted and user_input.strip() != "":
-    st.session_state.history.append(("user", user_input.strip()))
-    with st.spinner("🧠 Gyani soch raha hai..."):
-        answer = local_chat(user_input.strip())
-    st.session_state.history.append(("gyani", answer))
-
-# Show full conversation
-st.markdown("<hr><h4>📜 Purani Baatein:</h4>", unsafe_allow_html=True)
-for speaker, msg in st.session_state.history:
-    if speaker == "user":
-        st.markdown(f"👤 **User**: {msg}")
-    else:
-        st.markdown(f"🧠 **Gyani**: {msg}")
-
-st.markdown(f"<p style='text-align: right; font-size: small; color: gray;'>🕒 {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>", unsafe_allow_html=True)
+with gr.Blocks() as demo:
+    gr.Markdown("## 🧠 Gyani Lite (T4 GPU Compatible)")
+    chatbot = gr.Chatbot()
+    msg = gr.Textbox(placeholder="Gyani se kuch bhi poochho...")
+    state = gr.State()
+    msg.submit(chat_fn, [msg, state], [chatbot, state])
+    msg.submit(lambda: "", None, msg)
+    demo.launch(share=True)
