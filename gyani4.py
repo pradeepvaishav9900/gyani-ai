@@ -18,7 +18,7 @@ st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_i
 # Logo and Title
 st.markdown("""
     <div style='text-align: center;'>
-        <img src='https://i.imgur.com/Wr9vB2M.png' alt='Gyani Logo' width='120'/><br>
+        <img src='NEW_LOGO_URL_HERE' alt='Gyani Logo' width='120'/><br>
         <h1 style='margin-top: 10px;'>🤖 Gyani</h1>
         <h4 style='color: gray;'>Developed by Pradeep Vaishnav</h4>
         <p style='font-size: 14px; color: #555;'>Gyani ek AI sahayak hai jo Pradeep Vaishnav dwara banaya gaya hai. Iska uddeshya logo ko gyaan dena aur unki samasyaon ka samadhan karna hai.</p>
@@ -66,7 +66,7 @@ if 'history' not in st.session_state:
 
 def google_search_answer(query):
     try:
-        headers = {'User -Agent': 'Mozilla/5.0'}
+        headers = {'User  -Agent': 'Mozilla/5.0'}
         res = requests.get(f"https://www.google.com/search?q={query}", headers=headers)
         soup = BeautifulSoup(res.text, 'html.parser')
 
@@ -162,7 +162,7 @@ if submitted and user_q_multi:
 st.markdown("<hr><h4>📜 Purani Baatein:</h4>", unsafe_allow_html=True)
 for speaker, msg in st.session_state.history:
     if speaker == "user":
-        st.markdown(f"👤 **User  **: {msg}")
+        st.markdown(f"👤 **User    **: {msg}")
     else:
         st.markdown(f"🤖 **Gyani**: {msg}")
 
