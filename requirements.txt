@@ -8,3 +8,4 @@ wikipedia
 openai
 requests
 opencv-python
+opencv-python-headless
