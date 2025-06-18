@@ -9,6 +9,7 @@ st.set_page_config(page_title="Photo & Video Editing App", page_icon="🖼️")
 
 # Title
 st.title("🖼️ Photo & Video Editing App")
+st.subheader("Developed by Pradeep Vaishnav")
 
 # Image Editing Section
 st.header("Image Editing")
@@ -88,3 +89,12 @@ if uploaded_video is not None:
 # Clean up temporary files
 if uploaded_video is not None:
     os.remove(video_path)
+
+# Footer
+st.markdown("""
+    <hr>
+    <div style='text-align: center; color: gray;'>
+        🤖 <strong>Photo & Video Editing App</strong> developed by <strong>Pradeep Vaishnav</strong>.<br>
+        All rights reserved. 🙏
+    </div>
+""", unsafe_allow_html=True)
