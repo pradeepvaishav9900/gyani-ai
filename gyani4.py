@@ -7,9 +7,15 @@ import os
 
 st.set_page_config(page_title="Gyani - Photo & Video Editing App", page_icon="🖼️")
 
-# Title
-st.title("🖼️ Gyani - Photo & Video Editing App")
-st.subheader("Developed by Pradeep Vaishnav")
+# Title with styling
+st.markdown("""
+    <h1 style='text-align: center; color: #4B0082; font-family: "Times New Roman", Times, serif;'>
+        🖼️ Gyani - Photo & Video Editing App
+    </h1>
+    <h3 style='text-align: center; color: #6A5ACD; font-family: "Georgia", serif;'>
+        Developed by Pradeep Vaishnav
+    </h3>
+""", unsafe_allow_html=True)
 
 # Image Editing Section
 st.header("Image Editing")
@@ -22,6 +28,9 @@ if uploaded_image is not None:
 
     # User input for editing instructions
     user_instruction = st.text_input("Enter your editing request (e.g., 'blur', 'enhance', 'resize to 300x200')")
+
+    # Background color selection
+    bg_color = st.color_picker("Choose a background color", "#FFFFFF")
 
     if st.button("Edit Image"):
         edited_image = image  # Start with the original image
@@ -44,6 +53,13 @@ if uploaded_image is not None:
                 st.warning("Please specify the dimensions in the format 'width x height' (e.g., '300x200').")
         else:
             st.warning("Sorry, I can't process that request. Please try another.")
+
+        # Change background color
+        if bg_color:
+            # Create a new image with the specified background color
+            background = Image.new('RGB', edited_image.size, bg_color)
+            # Composite the edited image on top of the background
+            edited_image = Image.alpha_composite(background.convert('RGBA'), edited_image.convert('RGBA')).convert('RGB')
 
         # Display the edited image
         st.image(edited_image, caption="Edited Image", use_column_width=True)
