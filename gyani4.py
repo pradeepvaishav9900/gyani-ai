@@ -114,17 +114,20 @@ def local_chat(prompt):
         return "🧠 Gyani ka AI engine offline hai ya API key sahi nahi hai. कृपया OpenAI API key configure karein."
 
 def generate_response(user_q):
-    # Example of a more human-like response generation
-    greetings = ["hello", "hi", "hlo", "ram ram", "jai shree ram", "namaste", "jai jagannath"]
-    if any(greet in user_q.lower() for greet in greetings):
-        return "🤖 Gyani: Jai Jagannath! 🙏 Aapka swagat hai! Aap kaise hain? Kya aapko kisi vishay par madad chahiye?"
+    # Normalize the user question for easier matching
+    user_q = user_q.lower()
+
+    # Handle greetings and casual inquiries
+    greetings = ["hello", "hi", "kese ho", "kaise ho", "ram ram", "jai shree ram", "namaste", "jai jagannath"]
+    if any(greet in user_q for greet in greetings):
+        return "🤖 Gyani: Main theek hoon, dhanyavaad! Aap kaise hain? Kya aapko kisi vishay par madad chahiye?"
 
     # Contextual response based on previous interactions
-    if "mujhe pichle sawal ka uttar chahiye" in user_q.lower():
+    if "mujhe pichle sawal ka uttar chahiye" in user_q:
         return "🤖 Gyani: Mujhe yaad hai ki aapne pichle baar yeh prashn poocha tha. Kya aap usi vishay par aur jaankari chahenge?"
 
     # Check if the question is in the extracted text
-    if user_q.lower() in text_content.lower():
+    if user_q in text_content.lower():
         return "🤖 Gyani: Bahut accha prashn! Haan, iska uttar mujhe aapke file me mil gaya hai. 👇"
 
     # General knowledge response
@@ -151,7 +154,7 @@ if submitted and user_q_multi:
 st.markdown("<hr><h4>📜 Purani Baatein:</h4>", unsafe_allow_html=True)
 for speaker, msg in st.session_state.history:
     if speaker == "user":
-        st.markdown(f"👤 **User **: {msg}")
+        st.markdown(f"👤 **User  **: {msg}")
     else:
         st.markdown(f"🤖 **Gyani**: {msg}")
 
