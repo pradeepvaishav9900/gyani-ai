@@ -117,6 +117,11 @@ def generate_response(user_q):
     # Normalize the user question for easier matching
     user_q = user_q.lower()
 
+    # Handle casual conversational prompts
+    conversational_prompts = ["or batao", "kya ho raha hai", "kya chal raha hai", "kya naya hai", "kya haal hai", "kya scene hai"]
+    if any(prompt in user_q for prompt in conversational_prompts):
+        return "🤖 Gyani: Sab kuch theek hai! Aapko kya jaanana hai? Kya aap kisi vishay par baat karna chahenge?"
+
     # Handle greetings and casual inquiries
     greetings = ["hello", "hi", "kese ho", "kaise ho", "ram ram", "jai shree ram", "namaste", "jai jagannath"]
     if any(greet in user_q for greet in greetings):
@@ -154,7 +159,7 @@ if submitted and user_q_multi:
 st.markdown("<hr><h4>📜 Purani Baatein:</h4>", unsafe_allow_html=True)
 for speaker, msg in st.session_state.history:
     if speaker == "user":
-        st.markdown(f"👤 **User  **: {msg}")
+        st.markdown(f"👤 **User **: {msg}")
     else:
         st.markdown(f"🤖 **Gyani**: {msg}")
 
