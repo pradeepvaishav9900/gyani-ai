@@ -20,7 +20,7 @@ st.markdown("""
     <hr>
 """, unsafe_allow_html=True)
 
-# Image Upload and Editing
+# Image Upload
 st.header("🖼️ Image Editing")
 uploaded_image = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
 
@@ -29,26 +29,32 @@ if uploaded_image is not None:
     image = Image.open(uploaded_image)
     st.image(image, caption="Original Image", use_column_width=True)
 
-    # Image Editing Options
-    st.subheader("Edit Your Image")
-    edit_option = st.selectbox("Choose an editing option", ["None", "Resize", "Blur", "Enhance"])
+    # Chat Box for Editing Instructions
+    user_instruction = st.text_input("Enter your editing request (e.g., 'make it Ghibli style', 'blur the image', 'enhance colors')")
 
-    if edit_option == "Resize":
-        width = st.number_input("Width", min_value=1, value=image.width)
-        height = st.number_input("Height", min_value=1, value=image.height)
-        if st.button("Resize Image"):
-            resized_image = image.resize((width, height))
-            st.image(resized_image, caption="Resized Image", use_column_width=True)
+    if st.button("Edit Image"):
+        if user_instruction:
+            edited_image = image  # Start with the original image
 
-    elif edit_option == "Blur":
-        if st.button("Apply Blur"):
-            blurred_image = image.filter(ImageFilter.BLUR)
-            st.image(blurred_image, caption="Blurred Image", use_column_width=True)
+            # Process user instructions
+            if "blur" in user_instruction.lower():
+                edited_image = image.filter(ImageFilter.BLUR)
+                st.success("Image has been blurred.")
+            elif "enhance" in user_instruction.lower():
+                edited_image = image.filter(ImageFilter.SHARPEN)
+                st.success("Image has been enhanced.")
+            elif "resize" in user_instruction.lower():
+                width = st.number_input("Enter new width", min_value=1, value=image.width)
+                height = st.number_input("Enter new height", min_value=1, value=image.height)
+                edited_image = image.resize((width, height))
+                st.success("Image has been resized.")
+            else:
+                st.warning("Sorry, I can't process that request. Please try another.")
 
-    elif edit_option == "Enhance":
-        if st.button("Enhance Image"):
-            enhanced_image = image.filter(ImageFilter.SHARPEN)
-            st.image(enhanced_image, caption="Enhanced Image", use_column_width=True)
+            # Display the edited image
+            st.image(edited_image, caption="Edited Image", use_column_width=True)
+        else:
+            st.warning("Please enter an editing request.")
 
 # Text Extraction
 col1, col2 = st.columns([8, 1])
@@ -140,7 +146,7 @@ if submitted and user_q_multi:
 st.markdown("<hr><h4>📜 Purani Baatein:</h4>", unsafe_allow_html=True)
 for speaker, msg in st.session_state.history:
     if speaker == "user":
-        st.markdown(f"👤 **User      **: {msg}")
+        st.markdown(f"👤 **User       **: {msg}")
     else:
         st.markdown(f"🤖 **Gyani**: {msg}")
 
