@@ -66,7 +66,7 @@ if 'history' not in st.session_state:
 
 def google_search_answer(query):
     try:
-        headers = {'User-Agent': 'Mozilla/5.0'}
+        headers = {'User -Agent': 'Mozilla/5.0'}
         res = requests.get(f"https://www.google.com/search?q={query}", headers=headers)
         soup = BeautifulSoup(res.text, 'html.parser')
 
@@ -113,6 +113,24 @@ def local_chat(prompt):
     except Exception as e:
         return "🧠 Gyani ka AI engine offline hai ya API key sahi nahi hai. कृपया OpenAI API key configure karein."
 
+def generate_response(user_q):
+    # Example of a more human-like response generation
+    greetings = ["hello", "hi", "hlo", "ram ram", "jai shree ram", "namaste", "jai jagannath"]
+    if any(greet in user_q.lower() for greet in greetings):
+        return "🤖 Gyani: Jai Jagannath! 🙏 Aapka swagat hai! Aap kaise hain? Kya aapko kisi vishay par madad chahiye?"
+
+    # Contextual response based on previous interactions
+    if "mujhe pichle sawal ka uttar chahiye" in user_q.lower():
+        return "🤖 Gyani: Mujhe yaad hai ki aapne pichle baar yeh prashn poocha tha. Kya aap usi vishay par aur jaankari chahenge?"
+
+    # Check if the question is in the extracted text
+    if user_q.lower() in text_content.lower():
+        return "🤖 Gyani: Bahut accha prashn! Haan, iska uttar mujhe aapke file me mil gaya hai. 👇"
+
+    # General knowledge response
+    response = google_search_answer(user_q)
+    return f"🤖 Gyani: Yeh raha aapka uttar: {response} Kya aapko is vishay par aur kuch janna hai?"
+
 with st.form("chat_form", clear_on_submit=True):
     cols = st.columns([8, 1])
     with cols[0]:
@@ -125,32 +143,15 @@ if submitted and user_q_multi:
     for user_q in questions:
         st.session_state.history.append(("user", user_q))
         st.markdown(f"👤 Aapka Prashn: *{user_q}*")
-        response = ""
-
-        greetings = ["hello", "hi", "hlo", "ram ram", "jai shree ram", "namaste", "jai jagannath"]
-        if any(greet in user_q.lower() for greet in greetings):
-            response = "🤖 Gyani: Jai Jagannath 🙏 Aapka swagat hai! Aap kya janna chahenge?"
-        elif user_q.lower() in text_content.lower():
-            response = "🤖 Gyani: Bahut accha prashn! Haan, iska uttar mujhe aapke file me mil gaya hai. 👇"
-        elif any(k in user_q.lower() for k in ["python", "java", "html", "c++", "javascript", "c language"]):
-            response = local_chat(user_q)
-        elif "cbse syllabus" in user_q.lower():
-            response = "🤖 Gyani: Yeh raha CBSE board ka Class 1 se 12 tak ka syllabus summary link 👇\n👉 https://cbseacademic.nic.in/curriculum_2025.html"
-        elif any(kiss in user_q.lower() for kiss in ["kiss", "kissing", "chumban", "चुंबन"]):
-            response = "🤖 Gyani: Chumban ya pyaar se jude sawalon ke liye aapka prashn samanya gyaan mein nahi aata, par yeh ek rochak vishay hai. Samanya roop se pyaar, samman aur sahmati par adharit sambandhon ka gyaan dena bhi zaroori hai."
-        elif "gyani kaun hai" in user_q.lower() or "kisne banaya" in user_q.lower() or "ballo ai kaun hai" in user_q.lower():
-            response = "🤖 Gyani: Main ek AI chatbot hoon jise Pradeep Vaishnav ne banaya hai. Mera uddeshya logo ko sahayata dena aur unki gyaan ki pyaas bujhana hai."
-        else:
-            response = google_search_answer(user_q)
-
-        st.success("🤖 Gyani: " + response)
+        response = generate_response(user_q)
+        st.success(response)
         st.session_state.history.append(("gyani", response))
 
 # Display full conversation
 st.markdown("<hr><h4>📜 Purani Baatein:</h4>", unsafe_allow_html=True)
 for speaker, msg in st.session_state.history:
     if speaker == "user":
-        st.markdown(f"👤 **User**: {msg}")
+        st.markdown(f"👤 **User **: {msg}")
     else:
         st.markdown(f"🤖 **Gyani**: {msg}")
 
