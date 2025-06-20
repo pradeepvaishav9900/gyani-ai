@@ -82,7 +82,7 @@ if user_q:
     messages.append({"role": "user", "content": user_q})
 
     data = {
-        "model": "llama3-70b-8192",
+        "model": "meta-llama/llama-4-scout-17b-16e-instruct",
         "messages": messages
     }
 
