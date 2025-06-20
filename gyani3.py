@@ -10,10 +10,7 @@ import requests
 st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_icon="🧠")
 
 # Set Groq API key from Streamlit secrets
-groq_api_key = st.secrets.get("GROQ_API_KEY")
-if not groq_api_key or not groq_api_key.startswith("gsk_"):
-    st.error("❌ Groq API key nahi mila. Kripya `.streamlit/secrets.toml` me `GROQ_API_KEY` daalein.")
-    st.stop()
+groq_api_key = "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"  # 👈 Apni asli Groq API key yahan daalein (testing ke liye)
 
 # Logo and Title Section
 st.markdown("""
