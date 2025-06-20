@@ -26,13 +26,13 @@ st.markdown("""
     <hr>
 """, unsafe_allow_html=True)
 
-uploaded_file = st.file_uploader("📤 File Upload karein (PDF ya Image):", type=["pdf", "png", "jpg", "jpeg"])
+uploaded_file = st.file_uploader("📄 File Upload karein (PDF ya Image):", type=["pdf", "png", "jpg", "jpeg"])
 
 def extract_text_from_pdf(file):
     reader = PyPDF2.PdfReader(file)
     text = ""
     for page in reader.pages:
-        text += page.extract_text()
+        text += page.extract_text() or ""
     return text
 
 def extract_text_from_image(file):
@@ -47,11 +47,14 @@ if uploaded_file is not None:
     with st.spinner("📚 Gyani file ka vishleshan kar raha hai..."):
         if file_type == "application/pdf":
             text_content = extract_text_from_pdf(uploaded_file)
-        elif "image" in file_type:
+        elif file_type.startswith("image/"):
             text_content = extract_text_from_image(uploaded_file)
 
-    st.success("✅ File se gyaan prapt ho gaya!")
-    st.text_area("📖 Extracted Content:", text_content[:3000], height=300)
+    if text_content.strip():
+        st.success("✅ File se gyaan prapt ho gaya!")
+        st.text_area("📖 Extracted Content:", text_content, height=300, max_chars=10000)
+    else:
+        st.warning("⚠️ Koi padne layak text nahi mila file se.")
 
 # Chat History
 if 'history' not in st.session_state:
@@ -63,38 +66,28 @@ if user_q:
     st.markdown(f"👤 Aapka Prashn: *{user_q}*")
     response = ""
 
-    if user_q.lower() in text_content.lower():
-        response = "🧠 Gyani: Bahut accha prashn! Haan, iska uttar mujhe aapke file me mil gaya hai. 👇"
-        st.success(response)
-    elif any(k in user_q.lower() for k in ["python", "java", "html", "chemistry", "physics"]):
-        response = "🧠 Gyani: Hmm... Yeh ek technical prashn lagta hai. Chaliye, main aapko iske baare mein thoda batata hoon:"
-        st.info(response)
-        if "python" in user_q.lower():
-            st.code("for i in range(5):\n    print(i)", language="python")
-        elif "java" in user_q.lower():
-            st.code("public class Main {\n public static void main(String[] args) {\n  System.out.println(\"Hello\");\n }\n}", language="java")
-        elif "html" in user_q.lower():
-            st.code("<html><body>Hello</body></html>", language="html")
-        elif "physics" in user_q.lower():
-            st.markdown("📘 Newton ka doosra niyam: **F = m × a** (Bal = Dravya × Veegh)")
-        elif "chemistry" in user_q.lower():
-            st.markdown("🧪 Acid ka pH value hota hai **7 se kam**, jaise ki **HCl** ek strong acid hai.")
-    elif oai_key:
+    # Conversation prompt for better, natural reply
+    conversation = [{"role": "system", "content": "🧠 Tum Gyani ho — ek samajhdaar, Hindi mein baat karne wale teacher jaise AI assistant ho. Tumhare jawab asaan, helpful, aur dosti bhare hone chahiye. Agar user ka prashn kisi file se related ho ya technical ho, to use udaharan dekar samjhao."}]
+
+    for speaker, msg in st.session_state.history[-5:]:
+        role = "user" if speaker == "user" else "assistant"
+        conversation.append({"role": role, "content": msg})
+
+    conversation.append({"role": "user", "content": user_q})
+
+    if oai_key:
         try:
             response_obj = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "You are Gyani, a wise assistant who explains in Hindi like a human teacher."},
-                    {"role": "user", "content": user_q}
-                ]
+                messages=conversation
             )
-            response = response_obj['choices'][0]['message']['content']
+            response = response_obj["choices"][0]["message"]["content"]
             st.success("🧠 Gyani: " + response)
         except Exception as e:
             response = "❌ Gyani abhi sthir hai. Error: " + str(e)
             st.error(response)
     else:
-        response = "🧠 Gyani: Mujhe khed hai, yeh prashn mujhe file me ya mere gyaan me nahi mila. Par main aur seekh raha hoon – aap mujhe naye sawal poochhte rahiye! 🙏"
+        response = "🧠 Gyani: Mujhe khed hai, OpenAI key nahi mili. File ka analysis to ho gaya, par AI se jawab dena sambhav nahi." 
         st.warning(response)
 
     st.session_state.history.append(("gyani", response))
@@ -128,5 +121,6 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Timestamp for fun
+# Timestamp
 st.markdown(f"<p style='text-align: right; font-size: small; color: gray;'>🕒 {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>", unsafe_allow_html=True)
+
