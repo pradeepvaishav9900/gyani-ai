@@ -5,16 +5,15 @@ from PIL import Image
 import io
 import base64
 import datetime
-import openai
+import requests
 
 st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_icon="🧠")
 
-# Set OpenAI API key from Streamlit secrets
-oai_key = st.secrets.get("OPENAI_API_KEY")
-if oai_key:
-    openai.api_key = oai_key
-else:
-    st.warning("🔐 OpenAI API key missing! Add it in .streamlit/secrets.toml")
+# Set Groq API key from Streamlit secrets
+groq_api_key = st.secrets.get("GROQ_API_KEY")
+if not groq_api_key or not groq_api_key.startswith("gsk_"):
+    st.error("❌ Groq API key nahi mila. Kripya `.streamlit/secrets.toml` me `GROQ_API_KEY` daalein.")
+    st.stop()
 
 # Logo and Title Section
 st.markdown("""
@@ -66,31 +65,37 @@ if user_q:
     st.markdown(f"👤 Aapka Prashn: *{user_q}*")
     response = ""
 
-    # Conversation prompt for better, natural reply
-    conversation = [{"role": "system", "content": "🧠 Tum Gyani ho — ek samajhdaar, Hindi mein baat karne wale teacher jaise AI assistant ho. Tumhare jawab asaan, helpful, aur dosti bhare hone chahiye. Agar user ka prashn kisi file se related ho ya technical ho, to use udaharan dekar samjhao."}]
+    # Prepare Groq API request
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {groq_api_key}",
+        "Content-Type": "application/json"
+    }
 
+    # Prepare messages
+    messages = [
+        {"role": "system", "content": "🧠 Tum Gyani ho — ek samajhdaar, Hindi mein baat karne wale teacher jaise AI assistant ho. Tumhare jawab asaan, helpful, aur dosti bhare hone chahiye. Agar user ka prashn kisi file se related ho ya technical ho, to use udaharan dekar samjhao."}
+    ]
     for speaker, msg in st.session_state.history[-5:]:
         role = "user" if speaker == "user" else "assistant"
-        conversation.append({"role": role, "content": msg})
+        messages.append({"role": role, "content": msg})
+    messages.append({"role": "user", "content": user_q})
 
-    conversation.append({"role": "user", "content": user_q})
+    data = {
+        "model": "llama3-70b-8192",
+        "messages": messages
+    }
 
-    if oai_key:
-        try:
-            response_obj = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=conversation
-            )
-            response = response_obj["choices"][0]["message"]["content"]
-            st.success("🧠 Gyani: " + response)
-        except Exception as e:
-            response = "❌ Gyani abhi sthir hai. Error: " + str(e)
-            st.error(response)
+    # Make the API call
+    with st.spinner("🔄 Gyani soch raha hai..."):
+        res = requests.post(url, headers=headers, json=data)
+
+    if res.status_code == 200:
+        reply = res.json()["choices"][0]["message"]["content"]
+        st.session_state.history.append(("gyani", reply))
+        st.success("🧠 Gyani: " + reply)
     else:
-        response = "🧠 Gyani: Mujhe khed hai, OpenAI key nahi mili. File ka analysis to ho gaya, par AI se jawab dena sambhav nahi." 
-        st.warning(response)
-
-    st.session_state.history.append(("gyani", response))
+        st.error(f"❌ Error: {res.status_code} - {res.text}")
 
 # Display full conversation
 st.markdown("<hr><h4>📜 Purani Baatein:</h4>", unsafe_allow_html=True)
@@ -123,4 +128,3 @@ st.markdown("""
 
 # Timestamp
 st.markdown(f"<p style='text-align: right; font-size: small; color: gray;'>🕒 {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>", unsafe_allow_html=True)
-
