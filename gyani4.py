@@ -1,29 +1,46 @@
+# 🤖 Gyani Code Generator 2.0 - Customized for Pradeep
+# 🚀 Run this notebook on Google Colab with GPU (T4 or better)
+
+!pip install -q transformers accelerate gradio
+
+from transformers import AutoTokenizer, AutoModelForCausalLM
+import torch
 import gradio as gr
-from transformers import pipeline
 
-# Hinglish chatbot model (lightweight)
-chatbot_model = pipeline("text-generation", model="rinna/bilingual-gpt-neox-4b")
+# ✅ Better model for code generation
+model_id = "deepseek-ai/deepseek-coder-1.3b-instruct"
 
-def chatbot_response(message):
-    result = chatbot_model(message, max_new_tokens=100, do_sample=True, temperature=0.7)[0]['generated_text']
-    return f"🧠 Gyani: {result[len(message):].strip()}"
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+model = AutoModelForCausalLM.from_pretrained(
+    model_id,
+    trust_remote_code=True,
+    torch_dtype=torch.float16,
+    device_map="auto"
+)
 
-with gr.Blocks() as demo:
-    gr.Markdown("""
-    # 🤖 Gyani - Hinglish Chatbot  
-    Developed by **Pradeep Vaishnav**
-    """)
+def make_prompt(user_input):
+    return f"<|system|>\nYou are a helpful AI programmer. Generate clean and working code.\n<|user|>\n{user_input}\n<|assistant|>"
 
-    chatbot = gr.Chatbot()
-    msg = gr.Textbox(placeholder="💬 Ask your question in Hinglish...")
-    clear = gr.Button("🧹 Clear Chat")
+def generate_code(prompt):
+    input_text = make_prompt(prompt)
+    inputs = tokenizer(input_text, return_tensors="pt").to(model.device)
+    output = model.generate(
+        **inputs,
+        max_new_tokens=256,
+        temperature=0.7,
+        do_sample=True,
+        top_k=50,
+        top_p=0.95,
+        pad_token_id=tokenizer.eos_token_id
+    )
+    result = tokenizer.decode(output[0], skip_special_tokens=True)
+    return result.split("<|assistant|>")[-1].strip()
 
-    def user(message, history):
-        response = chatbot_response(message)
-        history.append((message, response))
-        return "", history
-
-    msg.submit(user, [msg, chatbot], [msg, chatbot])
-    clear.click(lambda: None, None, chatbot, queue=False)
-
-demo.launch()
+# 🎨 Gradio Interface
+gr.Interface(
+    fn=generate_code,
+    inputs=gr.Textbox(lines=4, placeholder="Apna program likhne ka idea yahan likhiye (Hindi/English)..."),
+    outputs="code",
+    title="🧠 Gyani Code Generator 2.0 - by Pradeep",
+    description="DeepSeek Model ka use karke Python, C++, JS ke programs banayein – bas Hindi/English me batayein!"
+).launch()
