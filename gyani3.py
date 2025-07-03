@@ -12,6 +12,10 @@ st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_i
 # Direct Groq API key (for testing only)
 groq_api_key = "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"
 
+# If tesseract is not found, set this path manually (Linux/Colab/Streamlit Cloud)
+# Windows example: r"C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
+pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
+
 # Logo and Title Section
 st.markdown("""
     <div style='text-align: center;'>
@@ -22,7 +26,7 @@ st.markdown("""
     <hr>
 """, unsafe_allow_html=True)
 
-uploaded_file = st.file_uploader("📄 File Upload karein (PDF ya Image):", type=["pdf", "png", "jpg", "jpeg"])
+uploaded_file = st.file_uploader("<b>📄 File Upload karein (PDF ya Image):</b>", type=["pdf", "png", "jpg", "jpeg"])
 
 def extract_text_from_pdf(file):
     reader = PyPDF2.PdfReader(file)
@@ -39,7 +43,7 @@ def extract_text_from_image(file):
 text_content = ""
 if uploaded_file is not None:
     file_type = uploaded_file.type
-    with st.spinner("📚 Gyani file ka vishleshan kar raha hai..."):
+    with st.spinner("<i>📚 Gyani file ka vishleshan kar raha hai...</i>"):
         if file_type == "application/pdf":
             text_content = extract_text_from_pdf(uploaded_file)
         elif file_type.startswith("image/"):
@@ -56,10 +60,15 @@ if 'history' not in st.session_state:
     st.session_state.history = []
 
 # Image uploader for chat
-st.markdown("### 🖼️ Agar aap photo ke saath baat karna chahte hain:")
-chat_image = st.file_uploader("📸 Image bhejein (optional):", type=["jpg", "jpeg", "png"], key="chat_image")
+st.markdown("""
+<div style='margin-top: 30px; padding: 10px; background-color: #1e1e1e; border-radius: 10px;'>
+    <h4 style='color: #ffd700;'>📸 Agar aap photo ke saath baat karna chahte hain:</h4>
+""", unsafe_allow_html=True)
+chat_image = st.file_uploader("🖼️ Image bhejein:", type=["jpg", "jpeg", "png"], key="chat_image")
+st.markdown("</div>", unsafe_allow_html=True)
 
-user_q = st.text_input("🧠 Aapka Prashn likhiye:")
+st.markdown("<br>", unsafe_allow_html=True)
+user_q = st.text_input("💬 Aapka Prashn likhiye:")
 if user_q:
     image_text = ""
     if chat_image:
@@ -69,7 +78,7 @@ if user_q:
     # Create hybrid message with image context
     full_prompt = f"{user_q}\n\n{f'🖼️ Image ka content:\n{image_text}' if image_text else ''}"
     st.session_state.history.append(("user", full_prompt))
-    st.markdown(f"👤 Aapka Prashn: *{user_q}* {'(📸 image ke saath)' if chat_image else ''}")
+    st.markdown(f"<div style='padding: 10px; border-left: 4px solid #ffd700; background-color: #2c2c2c; border-radius: 6px;'>👤 <b>Aapka Prashn:</b> {user_q} {'<i>(🖼️ image ke saath)</i>' if chat_image else ''}</div>", unsafe_allow_html=True)
 
     # Prepare Groq API request
     url = "https://api.groq.com/openai/v1/chat/completions"
@@ -98,7 +107,7 @@ if user_q:
     if res.status_code == 200:
         reply = res.json()["choices"][0]["message"]["content"]
         st.session_state.history.append(("gyani", reply))
-        st.success("🧠 Gyani: " + reply)
+        st.markdown(f"<div style='padding: 10px; background-color: #232323; border-radius: 6px;'><b>🧠 Gyani:</b> {reply}</div>", unsafe_allow_html=True)
     else:
         st.error(f"❌ Error: {res.status_code} - {res.text}")
 
@@ -106,9 +115,9 @@ if user_q:
 st.markdown("<hr><h4>📜 Purani Baatein:</h4>", unsafe_allow_html=True)
 for speaker, msg in st.session_state.history:
     if speaker == "user":
-        st.markdown(f"👤 **User**: {msg}")
+        st.markdown(f"<div style='padding: 8px; background-color: #2a2a2a; border-left: 4px solid #ffcc00;'>👤 <b>User:</b> {msg}</div>", unsafe_allow_html=True)
     else:
-        st.markdown(f"🧠 **Gyani**: {msg}")
+        st.markdown(f"<div style='padding: 8px; background-color: #1f1f1f; border-left: 4px solid #00cc99;'>🧠 <b>Gyani:</b> {msg}</div>", unsafe_allow_html=True)
 
 st.markdown("""
     <hr>
