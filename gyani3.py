@@ -6,6 +6,7 @@ import io
 import base64
 import datetime
 import requests
+from streamlit_javascript import st_javascript
 
 st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_icon="🧠")
 
@@ -86,14 +87,20 @@ sendButton.addEventListener("click", function() {
 """, unsafe_allow_html=True)
 
 chat_image = st.file_uploader("", type=["jpg", "jpeg", "png"], key="chat_image")
-user_q = st.text_input("", placeholder="", label_visibility="collapsed", key="chat_box")
+custom_input = st_javascript("""
+    () => {
+        const input = document.getElementById("chat_input");
+        return input ? input.value : "";
+    }
+""")
 submit = st.button("Send", key="submit_button")
+user_q = custom_input
 
 if user_q or submit:
     image_text = ""
     if chat_image:
         with st.spinner("🖼️ Image se gyaan prapt kiya ja raha hai..."):
-            image_text = extract_text_from_image(chat_image)
+            image_text = pytesseract.image_to_string(Image.open(chat_image))
 
     full_prompt = f"{user_q}\n\n{f'🖼️ Image ka content:\n{image_text}' if image_text else ''}"
     st.session_state.history.append(("user", full_prompt))
