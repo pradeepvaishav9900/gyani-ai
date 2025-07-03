@@ -25,39 +25,10 @@ st.markdown("""
     <hr>
 """, unsafe_allow_html=True)
 
-uploaded_file = st.file_uploader("<b>📄 File Upload karein (PDF ya Image):</b>", type=["pdf", "png", "jpg", "jpeg"])
-
-def extract_text_from_pdf(file):
-    reader = PyPDF2.PdfReader(file)
-    text = ""
-    for page in reader.pages:
-        text += page.extract_text() or ""
-    return text
-
-def extract_text_from_image(file):
-    image = Image.open(file)
-    text = pytesseract.image_to_string(image)
-    return text
-
-text_content = ""
-if uploaded_file is not None:
-    file_type = uploaded_file.type
-    with st.spinner("<i>📚 Gyani file ka vishleshan kar raha hai...</i>"):
-        if file_type == "application/pdf":
-            text_content = extract_text_from_pdf(uploaded_file)
-        elif file_type.startswith("image/"):
-            text_content = extract_text_from_image(uploaded_file)
-
-    if text_content.strip():
-        st.success("✅ File se gyaan prapt ho gaya!")
-        st.text_area("📖 Extracted Content:", text_content, height=300, max_chars=10000)
-    else:
-        st.warning("⚠️ Koi padne layak text nahi mila file se.")
-
 if 'history' not in st.session_state:
     st.session_state.history = []
 
-# Stylish chat interface box at bottom like screenshot (fixed form issue)
+# Stylish chat interface box at bottom like screenshot
 st.markdown("""
 <style>
 .chat-bar {
@@ -114,8 +85,7 @@ sendButton.addEventListener("click", function() {
 </script>
 """, unsafe_allow_html=True)
 
-chat_image = st.file_uploader("🖼️ Image bhejein:", type=["jpg", "jpeg", "png"], key="chat_image")
-
+chat_image = st.file_uploader("", type=["jpg", "jpeg", "png"], key="chat_image")
 user_q = st.text_input("", placeholder="", label_visibility="collapsed", key="chat_box")
 submit = st.button("Send", key="submit_button")
 
