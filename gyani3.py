@@ -57,50 +57,57 @@ if uploaded_file is not None:
 if 'history' not in st.session_state:
     st.session_state.history = []
 
-# Style
+# Stylish Chat Input UI like ChatGPT
 st.markdown("""
 <style>
-.chat-input-container {
-  display: flex;
-  align-items: center;
-  border: 1px solid #444;
-  border-radius: 20px;
-  padding: 6px 12px;
-  background-color: #1e1e1e;
+.chat-bar {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 700px;
+    background: #2c2c2c;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    z-index: 9999;
 }
-.chat-input-container input[type="text"] {
-  flex-grow: 1;
-  background: transparent;
-  border: none;
-  color: white;
-  outline: none;
-  font-size: 16px;
-  padding: 6px;
+.chat-bar input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 16px;
+    padding: 10px;
+    outline: none;
 }
-.chat-input-container button {
-  border: none;
-  background: transparent;
-  color: white;
-  font-size: 20px;
-  cursor: pointer;
+.chat-bar button {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    margin-left: 10px;
 }
 </style>
+<div class="chat-bar">
+    <form action="" method="post">
+        <input name="user_input" placeholder="Ask anything" />
+        <button type="submit">➤</button>
+        <button type="button">🎙️</button>
+        <button type="button">🛠️</button>
+    </form>
+</div>
 """, unsafe_allow_html=True)
 
-# Image uploader for chat
-st.markdown("""
-<div style='margin-top: 20px; padding: 10px; background-color: #1e1e1e; border-radius: 10px;'>
-    <h4 style='color: #ffd700;'>📸 Agar aap photo ke saath baat karna chahte hain:</h4>
-""", unsafe_allow_html=True)
+# Chat logic
+user_q = st.text_input("", placeholder="💬 Kuch bhi poochhiye...", label_visibility="collapsed", key="chat_box")
+submit = st.button("➡️", key="submit_button")
+
 chat_image = st.file_uploader("🖼️ Image bhejein:", type=["jpg", "jpeg", "png"], key="chat_image")
-st.markdown("</div>", unsafe_allow_html=True)
-
-with st.container():
-    col1, col2 = st.columns([9, 1])
-    with col1:
-        user_q = st.text_input("", placeholder="💬 Kuch bhi poochhiye...", label_visibility="collapsed", key="chat_box")
-    with col2:
-        submit = st.button("➡️", key="submit_button")
 
 if user_q or submit:
     image_text = ""
@@ -138,11 +145,10 @@ if user_q or submit:
         reply = res.json()["choices"][0]["message"]["content"]
         st.session_state.history.append(("gyani", reply))
         st.markdown(f"<div style='padding: 10px; background-color: #232323; border-radius: 6px;'><b>🧠 Gyani:</b> {reply}</div>", unsafe_allow_html=True)
-        st.download_button("💾 Chat Export (TXT)", data="\n\n".join([f"User: {u}\nGyani: {g}" for u, g in zip(st.session_state.history[::2], st.session_state.history[1::2])]), file_name="gyani_chat.txt")
     else:
         st.error(f"❌ Error: {res.status_code} - {res.text}")
 
-# Display full conversation
+# Display chat history
 st.markdown("<hr><h4>📜 Purani Baatein:</h4>", unsafe_allow_html=True)
 for speaker, msg in st.session_state.history:
     if speaker == "user":
@@ -150,16 +156,13 @@ for speaker, msg in st.session_state.history:
     else:
         st.markdown(f"<div style='padding: 8px; background-color: #1f1f1f; border-left: 4px solid #00cc99;'>🧠 <b>Gyani:</b> {msg}</div>", unsafe_allow_html=True)
 
+# Footer and Suggestions
 st.markdown("""
     <hr>
     <div style='text-align: center; color: gray;'>
         🤖 <strong>Gyani</strong> Chatbot ka nirmaan <strong>Pradeep Vaishnav</strong> dwara kiya gaya hai.<br>
         Jai Jagannath 🙏
     </div>
-""", unsafe_allow_html=True)
-
-# Suggested questions
-st.markdown("""
     <div style='margin-top:30px;'>
         <h4>📝 Aap yeh prashn bhi pooch sakte hain:</h4>
         <ul>
