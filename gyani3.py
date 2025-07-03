@@ -6,7 +6,6 @@ import io
 import base64
 import datetime
 import requests
-from streamlit_javascript import st_javascript
 
 st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_icon="🧠")
 
@@ -66,35 +65,16 @@ st.markdown("""
 }
 </style>
 <div class="chat-bar">
-    <input id="chat_input" name="chat_input" placeholder="💬 Kuch bhi poochhiye...">
-    <button id="chat_send">➡️</button>
+    <form action="#" method="post">
+        <input name="user_input" placeholder="💬 Kuch bhi poochhiye...">
+        <button type="submit">➡️</button>
+    </form>
 </div>
-<script>
-const input = document.getElementById("chat_input");
-const sendButton = document.getElementById("chat_send");
-
-input.addEventListener("keydown", function(e) {
-    if (e.key === "Enter") {
-        e.preventDefault();
-        sendButton.click();
-    }
-});
-
-sendButton.addEventListener("click", function() {
-    document.querySelector('button[data-testid="submit_button"]').click();
-});
-</script>
 """, unsafe_allow_html=True)
 
 chat_image = st.file_uploader("", type=["jpg", "jpeg", "png"], key="chat_image")
-custom_input = st_javascript("""
-    () => {
-        const input = document.getElementById("chat_input");
-        return input ? input.value : "";
-    }
-""")
+user_q = st.text_input("", key="user_input_box")
 submit = st.button("Send", key="submit_button")
-user_q = custom_input
 
 if user_q or submit:
     image_text = ""
