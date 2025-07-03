@@ -22,10 +22,6 @@ st.markdown("""
         text-align: center;
         margin-top: 2rem;
     }
-    .upload-block {
-        text-align: center;
-        margin-bottom: 2rem;
-    }
     .chat-container {
         display: flex;
         justify-content: center;
@@ -71,11 +67,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # File Upload
-st.markdown("""
-    <div class='upload-block'>
-        <label><b>📤 File ya photo/video bhejein (PDF, Image, Video):</b></label>
-    </div>
-""", unsafe_allow_html=True)
 uploaded_file = st.file_uploader("", type=["pdf", "png", "jpg", "jpeg", "mp4", "mov", "avi", "mpeg4"])
 if uploaded_file:
     st.session_state.uploaded_file = uploaded_file
@@ -89,6 +80,7 @@ st.markdown("""
     <div class='chat-container'>
 """, unsafe_allow_html=True)
 user_q = st.text_input("", placeholder="Ask anything...", label_visibility="collapsed", key="user_question")
+submit = st.form_submit_button if hasattr(st, 'form_submit_button') else None
 send_button = st.button("➡️")
 st.markdown("</div>", unsafe_allow_html=True)
 
@@ -109,7 +101,7 @@ if send_button and user_q:
 
     full_prompt = f"{user_q}\n\n{f'📎 Attached content:\n{content_text}' if content_text else ''}"
     st.session_state.history.append(("user", full_prompt))
-    
+
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {groq_api_key}",
