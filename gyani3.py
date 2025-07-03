@@ -119,7 +119,7 @@ if user_q or submit:
     }
 
     messages = [
-        {"role": "system", "content": "🧠 Tum Gyani ho — ek samajhdaar, Hindi mein baat karne wale teacher jaise AI assistant ho."}
+        {"role": "system", "content": "🧠 Tum Gyani ho — ek samajhdaar, Hindi mein baat karne wale teacher jaise AI assistant ho. Jab bhi koi puche ki tumhe kisne banaya, tum hamesha sach-sach bataoge ki 'Mujhe Pradeep Vaishnav ne banaya hai.'"}
     ]
     for speaker, msg in st.session_state.history[-5:]:
         role = "user" if speaker == "user" else "assistant"
