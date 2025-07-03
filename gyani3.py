@@ -66,10 +66,7 @@ st.markdown("""
     <hr>
 """, unsafe_allow_html=True)
 
-# File Upload
-uploaded_file = st.file_uploader("", type=["pdf", "png", "jpg", "jpeg", "mp4", "mov", "avi", "mpeg4"])
-if uploaded_file:
-    st.session_state.uploaded_file = uploaded_file
+
 
 # Session history
 if 'history' not in st.session_state:
