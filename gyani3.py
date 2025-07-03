@@ -6,7 +6,6 @@ import io
 import base64
 import datetime
 import requests
-import pyttsx3
 
 st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_icon="🧠")
 
@@ -15,11 +14,6 @@ groq_api_key = "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"
 
 # If tesseract is not found, set this path manually
 pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
-
-# Setup TTS engine
-engine = pyttsx3.init()
-engine.setProperty('rate', 160)
-engine.setProperty('volume', 0.9)
 
 # Logo and Title Section
 st.markdown("""
@@ -144,8 +138,6 @@ if user_q or submit:
         reply = res.json()["choices"][0]["message"]["content"]
         st.session_state.history.append(("gyani", reply))
         st.markdown(f"<div style='padding: 10px; background-color: #232323; border-radius: 6px;'><b>🧠 Gyani:</b> {reply}</div>", unsafe_allow_html=True)
-        engine.say(reply)
-        engine.runAndWait()
         st.download_button("💾 Chat Export (TXT)", data="\n\n".join([f"User: {u}\nGyani: {g}" for u, g in zip(st.session_state.history[::2], st.session_state.history[1::2])]), file_name="gyani_chat.txt")
     else:
         st.error(f"❌ Error: {res.status_code} - {res.text}")
