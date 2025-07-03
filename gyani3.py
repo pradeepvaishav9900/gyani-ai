@@ -9,8 +9,8 @@ import requests
 
 st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_icon="🧠")
 
-# Set Groq API key from Streamlit secrets
-groq_api_key = st.secrets["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"]  # Secure way
+# Direct Groq API key (for testing only)
+groq_api_key = "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"
 
 # Logo and Title Section
 st.markdown("""
