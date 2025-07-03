@@ -35,7 +35,7 @@ st.markdown("""
         border-radius: 20px;
         padding: 10px 20px;
     }
-    .chat-input {
+    .chat-container input[type=text] {
         flex-grow: 1;
         border: none;
         background-color: #2b2b2b;
@@ -44,6 +44,15 @@ st.markdown("""
         font-size: 16px;
         border-radius: 12px;
         margin-right: 10px;
+    }
+    .chat-container button {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 10px 16px;
+        font-size: 18px;
+        cursor: pointer;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -61,16 +70,30 @@ st.markdown("""
 if 'history' not in st.session_state:
     st.session_state.history = []
 
-# Chat input interface
+# Chat box with form (auto clear)
 st.markdown("""
     <div class='chat-container'>
 """, unsafe_allow_html=True)
-
-user_q = st.text_input("", key="user_q", placeholder="Ask anything...", label_visibility="collapsed")
+with st.form(key="chat_form", clear_on_submit=True):
+    user_q = st.text_input("", placeholder="Ask anything...", label_visibility="collapsed")
+    submitted = st.form_submit_button("💬 Send")
 st.markdown("</div>", unsafe_allow_html=True)
 
-if user_q:
+if submitted and user_q:
     content_text = ""
+    if 'uploaded_file' in st.session_state and st.session_state.uploaded_file is not None:
+        uploaded_file = st.session_state.uploaded_file
+        with st.spinner("📂 File ka analysis ho raha hai..."):
+            file_type = uploaded_file.type
+            if file_type == "application/pdf":
+                reader = PyPDF2.PdfReader(uploaded_file)
+                for page in reader.pages:
+                    content_text += page.extract_text() or ""
+            elif file_type.startswith("image"):
+                content_text = pytesseract.image_to_string(Image.open(uploaded_file))
+            else:
+                content_text = f"[📁 File uploaded: {uploaded_file.name}]"
+
     full_prompt = f"{user_q}\n\n{f'📎 Attached content:\n{content_text}' if content_text else ''}"
     st.session_state.history.append(("user", full_prompt))
 
@@ -80,7 +103,9 @@ if user_q:
         "Content-Type": "application/json"
     }
 
-    messages = []
+    messages = [
+        {"role": "system", "content": "🧠 Tum Gyani ho — ek samajhdaar, Hindi mein baat karne wale teacher jaise AI assistant ho. Jab bhi koi puche ki tumhe kisne banaya, tum hamesha sach-sach bataoge ki 'Mujhe Pradeep Vaishnav ne banaya hai.'"}
+    ]
     for speaker, msg in st.session_state.history[-5:]:
         role = "user" if speaker == "user" else "assistant"
         messages.append({"role": role, "content": msg})
@@ -100,9 +125,6 @@ if user_q:
         st.markdown(f"<div style='padding: 12px; background-color: #1f1f1f; border-radius: 12px; margin: 10px auto; max-width: 720px;'><b>🧠 Gyani:</b> {reply}</div>", unsafe_allow_html=True)
     else:
         st.error(f"❌ Error: {res.status_code} - {res.text}")
-
-    # Clear input by resetting the value manually (no rerun)
-    st.session_state.user_q = ""
 
 # Show chat history cleanly
 for speaker, msg in st.session_state.history:
