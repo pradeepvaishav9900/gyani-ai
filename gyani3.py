@@ -57,10 +57,10 @@ if uploaded_file is not None:
 if 'history' not in st.session_state:
     st.session_state.history = []
 
-# Stylish Chat Input UI like ChatGPT
+# Clean chat UI (without <form>)
 st.markdown("""
 <style>
-.chat-bar {
+.chat-box {
     position: fixed;
     bottom: 1.5rem;
     left: 50%;
@@ -75,39 +75,20 @@ st.markdown("""
     box-shadow: 0 0 10px rgba(0,0,0,0.5);
     z-index: 9999;
 }
-.chat-bar input {
-    flex: 1;
+.chat-box input, .chat-box button {
     background: transparent;
     border: none;
     color: #fff;
     font-size: 16px;
-    padding: 10px;
-    outline: none;
-}
-.chat-bar button {
-    background: transparent;
-    border: none;
-    color: #fff;
-    font-size: 20px;
-    cursor: pointer;
     margin-left: 10px;
 }
 </style>
-<div class="chat-bar">
-    <form action="" method="post">
-        <input name="user_input" placeholder="Ask anything" />
-        <button type="submit">➤</button>
-        <button type="button">🎙️</button>
-        <button type="button">🛠️</button>
-    </form>
-</div>
 """, unsafe_allow_html=True)
 
-# Chat logic
+chat_image = st.file_uploader("🖼️ Image bhejein:", type=["jpg", "jpeg", "png"], key="chat_image")
+
 user_q = st.text_input("", placeholder="💬 Kuch bhi poochhiye...", label_visibility="collapsed", key="chat_box")
 submit = st.button("➡️", key="submit_button")
-
-chat_image = st.file_uploader("🖼️ Image bhejein:", type=["jpg", "jpeg", "png"], key="chat_image")
 
 if user_q or submit:
     image_text = ""
