@@ -98,7 +98,7 @@ with st.form("chat_form", clear_on_submit=True):
         }
 
         messages = [
-            {"role": "system", "content": "🧠 Tum Gyani ho — ek samajhdaar, Hindi mein baat karne wale teacher jaise AI assistant ho. Jab bhi koi puche ki tumhe kisne banaya, tum hamesha sach-sach bataoge ki 'Mujhe Pradeep Vaishnav ne banaya hai.'"}
+            {"role": "system", "content": "🧠 Tum Gyani ho — ek samajhdaar, Hindi mein baat karne wale teacher jaise AI assistant ho.jab bhi puch jae ki tumhara naam kya hai to tumko khena hai ki mera naam gyani hai. Jab bhi koi puche ki tumhe kisne banaya, tum hamesha sach-sach bataoge ki 'Mujhe Pradeep Vaishnav ne banaya hai.'"}
         ]
         for speaker, msg in st.session_state.history[-5:]:
             role = "user" if speaker == "user" else "assistant"
