@@ -57,7 +57,7 @@ if uploaded_file is not None:
 if 'history' not in st.session_state:
     st.session_state.history = []
 
-# Stylish chat interface box at bottom like screenshot
+# Stylish chat interface box at bottom like screenshot (fixed form issue)
 st.markdown("""
 <style>
 .chat-bar {
@@ -94,18 +94,22 @@ st.markdown("""
 }
 </style>
 <div class="chat-bar">
-    <form action="#" method="post" onsubmit="return false;">
-        <input id="chat_input" name="chat_input" placeholder="💬 Kuch bhi poochhiye...">
-        <button onclick="document.querySelector('button[data-testid=\"submit_button\"]').click();">➡️</button>
-    </form>
+    <input id="chat_input" name="chat_input" placeholder="💬 Kuch bhi poochhiye...">
+    <button id="chat_send">➡️</button>
 </div>
 <script>
 const input = document.getElementById("chat_input");
+const sendButton = document.getElementById("chat_send");
+
 input.addEventListener("keydown", function(e) {
     if (e.key === "Enter") {
         e.preventDefault();
-        document.querySelector('button[data-testid="submit_button"]').click();
+        sendButton.click();
     }
+});
+
+sendButton.addEventListener("click", function() {
+    document.querySelector('button[data-testid="submit_button"]').click();
 });
 </script>
 """, unsafe_allow_html=True)
