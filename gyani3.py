@@ -66,8 +66,6 @@ st.markdown("""
     <hr>
 """, unsafe_allow_html=True)
 
-
-
 # Session history
 if 'history' not in st.session_state:
     st.session_state.history = []
@@ -77,11 +75,9 @@ st.markdown("""
     <div class='chat-container'>
 """, unsafe_allow_html=True)
 user_q = st.text_input("", placeholder="Ask anything...", label_visibility="collapsed", key="user_question")
-submit = st.form_submit_button if hasattr(st, 'form_submit_button') else None
-send_button = st.button("➡️")
 st.markdown("</div>", unsafe_allow_html=True)
 
-if send_button and user_q:
+if user_q:
     content_text = ""
     if 'uploaded_file' in st.session_state and st.session_state.uploaded_file is not None:
         uploaded_file = st.session_state.uploaded_file
