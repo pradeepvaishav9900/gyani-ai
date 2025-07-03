@@ -28,42 +28,12 @@ st.markdown("""
 if 'history' not in st.session_state:
     st.session_state.history = []
 
-uploaded_file = st.file_uploader("📄 File ya photo/video bhejein (PDF, Image, Video):", type=["pdf", "jpg", "jpeg", "png", "mp4", "mov", "avi"], key="chat_image")
-
-# Display chat history
-st.markdown("<hr><h4>📜 Purani Baatein:</h4>", unsafe_allow_html=True)
-for speaker, msg in st.session_state.history:
-    if speaker == "user":
-        st.markdown(f"<div style='padding: 8px; background-color: #2a2a2a; border-left: 4px solid #ffcc00;'>👤 <b>User:</b> {msg}</div>", unsafe_allow_html=True)
-    else:
-        st.markdown(f"<div style='padding: 8px; background-color: #1f1f1f; border-left: 4px solid #00cc99;'>🧠 <b>Gyani:</b> {msg}</div>", unsafe_allow_html=True)
-
-# Footer and Suggestions
-st.markdown("""
-    <hr>
-    <div style='text-align: center; color: gray;'>
-        🤖 <strong>Gyani</strong> Chatbot ka nirmaan <strong>Pradeep Vaishnav</strong> dwara kiya gaya hai.<br>
-        Jai Jagannath 🙏
-    </div>
-    <div style='margin-top:30px;'>
-        <h4>📝 Aap yeh prashn bhi pooch sakte hain:</h4>
-        <ul>
-            <li>Python me loop kaise chalta hai?</li>
-            <li>Newton ka pehla niyam kya hai?</li>
-            <li>HTML ka basic structure kya hota hai?</li>
-            <li>Is file me syllabus hai kya?</li>
-        </ul>
-    </div>
-""", unsafe_allow_html=True)
-
-# Timestamp
-st.markdown(f"<p style='text-align: right; font-size: small; color: gray;'>🕒 {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>", unsafe_allow_html=True)
+uploaded_file = st.file_uploader("📄 File ya photo/video bhejein (PDF, Image, Video):", type=["pdf", "jpg", "jpeg", "png", "mp4", "mov", "avi", "mpeg4"], key="chat_image")
 
 # Chat input form styled like screenshot
 with st.form("chat_form", clear_on_submit=True):
     st.markdown("""
     <style>
-    .css-13sdm1v { display: none; }
     .custom-input-box {
         position: fixed;
         bottom: 10px;
@@ -119,7 +89,7 @@ with st.form("chat_form", clear_on_submit=True):
 
         full_prompt = f"{user_q}\n\n{f'📎 Attached content:\n{content_text}' if content_text else ''}"
         st.session_state.history.append(("user", full_prompt))
-        st.markdown(f"<div style='padding: 10px; border-left: 4px solid #ffd700; background-color: #2c2c2c; border-radius: 6px;'>👤 <b>Aapka Prashn:</b> {user_q} {'<i>(📎 file ke saath)</i>' if uploaded_file else ''}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='padding: 10px; border-left: 4px solid #ffd700; background-color: #2c2c2c; border-radius: 6px;'>👤 <b>Aapka Prashn:</b> {user_q} {'<i>(📌 file ke saath)</i>' if uploaded_file else ''}</div>", unsafe_allow_html=True)
 
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {
@@ -128,7 +98,7 @@ with st.form("chat_form", clear_on_submit=True):
         }
 
         messages = [
-            {"role": "system", "content": "🧠 mera naam gyani hai — ek samajhdaar, Hindi mein baat karne wale teacher jaise AI assistant ho. Jab bhi koi puche ki tumhe kisne banaya, tum hamesha sach-sach bataoge ki 'Mujhe Pradeep Vaishnav ne banaya hai.'"}
+            {"role": "system", "content": "🧠 Tum Gyani ho — ek samajhdaar, Hindi mein baat karne wale teacher jaise AI assistant ho. Jab bhi koi puche ki tumhe kisne banaya, tum hamesha sach-sach bataoge ki 'Mujhe Pradeep Vaishnav ne banaya hai.'"}
         ]
         for speaker, msg in st.session_state.history[-5:]:
             role = "user" if speaker == "user" else "assistant"
@@ -149,3 +119,32 @@ with st.form("chat_form", clear_on_submit=True):
             st.markdown(f"<div style='padding: 10px; background-color: #232323; border-radius: 6px;'><b>🧠 Gyani:</b> {reply}</div>", unsafe_allow_html=True)
         else:
             st.error(f"❌ Error: {res.status_code} - {res.text}")
+
+# Display chat history
+st.markdown("<hr><h4>📜 Purani Baatein:</h4>", unsafe_allow_html=True)
+for speaker, msg in st.session_state.history:
+    if speaker == "user":
+        st.markdown(f"<div style='padding: 8px; background-color: #2a2a2a; border-left: 4px solid #ffcc00;'>👤 <b>User:</b> {msg}</div>", unsafe_allow_html=True)
+    else:
+        st.markdown(f"<div style='padding: 8px; background-color: #1f1f1f; border-left: 4px solid #00cc99;'>🧠 <b>Gyani:</b> {msg}</div>", unsafe_allow_html=True)
+
+# Footer and Suggestions
+st.markdown("""
+    <hr>
+    <div style='text-align: center; color: gray;'>
+        🤖 <strong>Gyani</strong> Chatbot ka nirmaan <strong>Pradeep Vaishnav</strong> dwara kiya gaya hai.<br>
+        Jai Jagannath 🙏
+    </div>
+    <div style='margin-top:30px;'>
+        <h4>📝 Aap yeh prashn bhi pooch sakte hain:</h4>
+        <ul>
+            <li>Python me loop kaise chalta hai?</li>
+            <li>Newton ka pehla niyam kya hai?</li>
+            <li>HTML ka basic structure kya hota hai?</li>
+            <li>Is file me syllabus hai kya?</li>
+        </ul>
+    </div>
+""", unsafe_allow_html=True)
+
+# Timestamp
+st.markdown(f"<p style='text-align: right; font-size: small; color: gray;'>🥒 {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>", unsafe_allow_html=True)
