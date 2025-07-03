@@ -70,14 +70,16 @@ st.markdown("""
 if 'history' not in st.session_state:
     st.session_state.history = []
 
-# Chat box
+# Chat box with form (auto clear)
 st.markdown("""
     <div class='chat-container'>
 """, unsafe_allow_html=True)
-user_q = st.text_input("", placeholder="Ask anything...", label_visibility="collapsed")
+with st.form(key="chat_form", clear_on_submit=True):
+    user_q = st.text_input("", placeholder="Ask anything...", label_visibility="collapsed")
+    submitted = st.form_submit_button("💬 Send")
 st.markdown("</div>", unsafe_allow_html=True)
 
-if user_q:
+if submitted and user_q:
     content_text = ""
     if 'uploaded_file' in st.session_state and st.session_state.uploaded_file is not None:
         uploaded_file = st.session_state.uploaded_file
@@ -123,9 +125,6 @@ if user_q:
         st.markdown(f"<div style='padding: 12px; background-color: #1f1f1f; border-radius: 12px; margin: 10px auto; max-width: 720px;'><b>🧠 Gyani:</b> {reply}</div>", unsafe_allow_html=True)
     else:
         st.error(f"❌ Error: {res.status_code} - {res.text}")
-
-    # Rerun to clear input box
-    st.experimental_rerun()
 
 # Show chat history cleanly
 for speaker, msg in st.session_state.history:
