@@ -30,85 +30,6 @@ if 'history' not in st.session_state:
 
 chat_image = st.file_uploader("📷 Image bhejein (optional):", type=["jpg", "jpeg", "png"], key="chat_image")
 
-# Custom styled textbox and send button (bottom sticky)
-st.markdown("""
-<style>
-.custom-box {
-    position: fixed;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 95%;
-    max-width: 700px;
-    background-color: #2b2b2b;
-    padding: 10px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    z-index: 9999;
-}
-.custom-box input {
-    flex-grow: 1;
-    border: none;
-    border-radius: 8px;
-    padding: 8px 12px;
-    margin-right: 10px;
-    background-color: #1c1c1c;
-    color: white;
-}
-.custom-box button {
-    background-color: #4CAF50;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 8px;
-    color: white;
-    cursor: pointer;
-}
-</style>
-""", unsafe_allow_html=True)
-
-user_q = st.text_input("💬 Aapka Prashn likhiye:", key="user_input_box")
-submit = st.button("➡️", key="submit_button")
-
-if user_q or submit:
-    image_text = ""
-    if chat_image:
-        with st.spinner("🖼️ Image se gyaan prapt kiya ja raha hai..."):
-            image_text = pytesseract.image_to_string(Image.open(chat_image))
-
-    full_prompt = f"{user_q}\n\n{f'🖼️ Image ka content:\n{image_text}' if image_text else ''}"
-    st.session_state.history.append(("user", full_prompt))
-    st.markdown(f"<div style='padding: 10px; border-left: 4px solid #ffd700; background-color: #2c2c2c; border-radius: 6px;'>👤 <b>Aapka Prashn:</b> {user_q} {'<i>(🖼️ image ke saath)</i>' if chat_image else ''}</div>", unsafe_allow_html=True)
-
-    url = "https://api.groq.com/openai/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {groq_api_key}",
-        "Content-Type": "application/json"
-    }
-
-    messages = [
-        {"role": "system", "content": "🧠 Tum Gyani ho — ek samajhdaar, Hindi mein baat karne wale teacher jaise AI assistant ho. Jab bhi koi puche ki tumhe kisne banaya, tum hamesha sach-sach bataoge ki 'Mujhe Pradeep Vaishnav ne banaya hai.'"}
-    ]
-    for speaker, msg in st.session_state.history[-5:]:
-        role = "user" if speaker == "user" else "assistant"
-        messages.append({"role": role, "content": msg})
-    messages.append({"role": "user", "content": full_prompt})
-
-    data = {
-        "model": "llama3-8b-8192",
-        "messages": messages
-    }
-
-    with st.spinner("🔄 Gyani soch raha hai..."):
-        res = requests.post(url, headers=headers, json=data)
-
-    if res.status_code == 200:
-        reply = res.json()["choices"][0]["message"]["content"]
-        st.session_state.history.append(("gyani", reply))
-        st.markdown(f"<div style='padding: 10px; background-color: #232323; border-radius: 6px;'><b>🧠 Gyani:</b> {reply}</div>", unsafe_allow_html=True)
-    else:
-        st.error(f"❌ Error: {res.status_code} - {res.text}")
-
 # Display chat history
 st.markdown("<hr><h4>📜 Purani Baatein:</h4>", unsafe_allow_html=True)
 for speaker, msg in st.session_state.history:
@@ -137,3 +58,86 @@ st.markdown("""
 
 # Timestamp
 st.markdown(f"<p style='text-align: right; font-size: small; color: gray;'>🕒 {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>", unsafe_allow_html=True)
+
+# Chat input form styled like screenshot
+with st.form("chat_form", clear_on_submit=True):
+    st.markdown("""
+    <style>
+    .css-13sdm1v { display: none; }
+    .custom-input-box {
+        position: fixed;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        max-width: 720px;
+        display: flex;
+        background-color: #1f1f1f;
+        padding: 10px;
+        border-radius: 12px;
+        z-index: 999;
+    }
+    .custom-input-box textarea {
+        flex-grow: 1;
+        margin-right: 8px;
+        border-radius: 8px;
+        background-color: #2b2b2b;
+        color: white;
+        border: none;
+        padding: 10px;
+    }
+    .custom-input-box button {
+        background-color: #4CAF50;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        color: white;
+        cursor: pointer;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    with st.container():
+        st.markdown("<div class='custom-input-box'>", unsafe_allow_html=True)
+        user_q = st.text_area("", placeholder="💬 Kuch bhi poochhiye...", label_visibility="collapsed", key="user_question")
+        submitted = st.form_submit_button("➡️")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    if submitted and user_q:
+        image_text = ""
+        if chat_image:
+            with st.spinner("🖼️ Image se gyaan prapt kiya ja raha hai..."):
+                image_text = pytesseract.image_to_string(Image.open(chat_image))
+
+        full_prompt = f"{user_q}\n\n{f'🖼️ Image ka content:\n{image_text}' if image_text else ''}"
+        st.session_state.history.append(("user", full_prompt))
+        st.markdown(f"<div style='padding: 10px; border-left: 4px solid #ffd700; background-color: #2c2c2c; border-radius: 6px;'>👤 <b>Aapka Prashn:</b> {user_q} {'<i>(🖼️ image ke saath)</i>' if chat_image else ''}</div>", unsafe_allow_html=True)
+
+        url = "https://api.groq.com/openai/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {groq_api_key}",
+            "Content-Type": "application/json"
+        }
+
+        messages = [
+            {"role": "system", "content": "🧠 Tum Gyani ho — ek samajhdaar, Hindi mein baat karne wale teacher jaise AI assistant ho. Jab bhi koi puche ki tumhe kisne banaya, tum hamesha sach-sach bataoge ki 'Mujhe Pradeep Vaishnav ne banaya hai.'"}
+        ]
+        for speaker, msg in st.session_state.history[-5:]:
+            role = "user" if speaker == "user" else "assistant"
+            messages.append({"role": role, "content": msg})
+        messages.append({"role": "user", "content": full_prompt})
+
+        data = {
+            "model": "llama3-8b-8192",
+            "messages": messages
+        }
+
+        with st.spinner("🔄 Gyani soch raha hai..."):
+            res = requests.post(url, headers=headers, json=data)
+
+        if res.status_code == 200:
+            reply = res.json()["choices"][0]["message"]["content"]
+            st.session_state.history.append(("gyani", reply))
+            st.markdown(f"<div style='padding: 10px; background-color: #232323; border-radius: 6px;'><b>🧠 Gyani:</b> {reply}</div>", unsafe_allow_html=True)
+        else:
+            st.error(f"❌ Error: {res.status_code} - {res.text}")
