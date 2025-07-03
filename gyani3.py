@@ -69,17 +69,15 @@ st.markdown("""
 # Session history
 if 'history' not in st.session_state:
     st.session_state.history = []
-if 'user_question' not in st.session_state:
-    st.session_state.user_question = ""
 
 # Chat box
 st.markdown("""
     <div class='chat-container'>
 """, unsafe_allow_html=True)
-user_q = st.text_input("", placeholder="Ask anything...", label_visibility="collapsed", key="user_question")
+user_q = st.text_input("", placeholder="Ask anything...", label_visibility="collapsed")
 st.markdown("</div>", unsafe_allow_html=True)
 
-if st.session_state.user_question:
+if user_q:
     content_text = ""
     if 'uploaded_file' in st.session_state and st.session_state.uploaded_file is not None:
         uploaded_file = st.session_state.uploaded_file
@@ -94,7 +92,7 @@ if st.session_state.user_question:
             else:
                 content_text = f"[📁 File uploaded: {uploaded_file.name}]"
 
-    full_prompt = f"{st.session_state.user_question}\n\n{f'📎 Attached content:\n{content_text}' if content_text else ''}"
+    full_prompt = f"{user_q}\n\n{f'📎 Attached content:\n{content_text}' if content_text else ''}"
     st.session_state.history.append(("user", full_prompt))
 
     url = "https://api.groq.com/openai/v1/chat/completions"
@@ -126,7 +124,8 @@ if st.session_state.user_question:
     else:
         st.error(f"❌ Error: {res.status_code} - {res.text}")
 
-    st.session_state.user_question = ""  # clear the input field
+    # Rerun to clear input box
+    st.experimental_rerun()
 
 # Show chat history cleanly
 for speaker, msg in st.session_state.history:
