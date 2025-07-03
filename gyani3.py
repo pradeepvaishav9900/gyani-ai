@@ -70,6 +70,11 @@ st.markdown("""
 if 'history' not in st.session_state:
     st.session_state.history = []
 
+# File Upload (Photo, Video, PDF)
+uploaded_file = st.file_uploader("📁 File ya photo/video bhejein (PDF, Image, Video):", type=["pdf", "png", "jpg", "jpeg", "mp4", "mov", "avi", "mpeg4"])
+if uploaded_file:
+    st.session_state.uploaded_file = uploaded_file
+
 # Chat box with form (auto clear)
 st.markdown("""
     <div class='chat-container'>
