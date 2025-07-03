@@ -57,38 +57,63 @@ if uploaded_file is not None:
 if 'history' not in st.session_state:
     st.session_state.history = []
 
-# Clean chat UI (without <form>)
+# Stylish chat interface box at bottom like screenshot
 st.markdown("""
 <style>
-.chat-box {
+.chat-bar {
     position: fixed;
-    bottom: 1.5rem;
+    bottom: 1rem;
     left: 50%;
     transform: translateX(-50%);
-    width: 90%;
+    width: 95%;
     max-width: 700px;
-    background: #2c2c2c;
-    border-radius: 30px;
     display: flex;
     align-items: center;
-    padding: 10px 20px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    background: #2b2b2b;
+    border-radius: 20px;
+    padding: 10px 15px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
     z-index: 9999;
 }
-.chat-box input, .chat-box button {
-    background: transparent;
+.chat-bar input {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 10px;
     border: none;
+    background: #1c1c1c;
     color: #fff;
-    font-size: 16px;
+}
+.chat-bar button {
     margin-left: 10px;
+    padding: 8px 15px;
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    border-radius: 10px;
+    cursor: pointer;
 }
 </style>
+<div class="chat-bar">
+    <form action="#" method="post" onsubmit="return false;">
+        <input id="chat_input" name="chat_input" placeholder="💬 Kuch bhi poochhiye...">
+        <button onclick="document.querySelector('button[data-testid=\"submit_button\"]').click();">➡️</button>
+    </form>
+</div>
+<script>
+const input = document.getElementById("chat_input");
+input.addEventListener("keydown", function(e) {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        document.querySelector('button[data-testid="submit_button"]').click();
+    }
+});
+</script>
 """, unsafe_allow_html=True)
 
 chat_image = st.file_uploader("🖼️ Image bhejein:", type=["jpg", "jpeg", "png"], key="chat_image")
 
-user_q = st.text_input("", placeholder="💬 Kuch bhi poochhiye...", label_visibility="collapsed", key="chat_box")
-submit = st.button("➡️", key="submit_button")
+user_q = st.text_input("", placeholder="", label_visibility="collapsed", key="chat_box")
+submit = st.button("Send", key="submit_button")
 
 if user_q or submit:
     image_text = ""
