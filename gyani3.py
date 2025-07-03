@@ -28,11 +28,8 @@ st.markdown("""
 if 'history' not in st.session_state:
     st.session_state.history = []
 
-uploaded_file = st.file_uploader("📄 File ya photo/video bhejein (PDF, Image, Video):", type=["pdf", "jpg", "jpeg", "png", "mp4", "mov", "avi", "mpeg4"], key="chat_image")
-
-# Chat input form styled like screenshot
-with st.form("chat_form", clear_on_submit=True):
-    st.markdown("""
+# Chat input box with single Enter submission
+st.markdown("""
     <style>
     .custom-input-box {
         position: fixed;
@@ -47,7 +44,7 @@ with st.form("chat_form", clear_on_submit=True):
         border-radius: 12px;
         z-index: 999;
     }
-    .custom-input-box textarea {
+    .custom-input-box input[type=text] {
         flex-grow: 1;
         margin-right: 8px;
         border-radius: 8px;
@@ -65,60 +62,62 @@ with st.form("chat_form", clear_on_submit=True):
         cursor: pointer;
     }
     </style>
-    """, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
-    with st.container():
-        st.markdown("<div class='custom-input-box'>", unsafe_allow_html=True)
-        user_q = st.text_area("", placeholder="💬 Kuch bhi poochhiye...", label_visibility="collapsed", key="user_question")
-        submitted = st.form_submit_button("➡️")
-        st.markdown("</div>", unsafe_allow_html=True)
+input_container = st.container()
+with input_container:
+    st.markdown("<div class='custom-input-box'>", unsafe_allow_html=True)
+    user_q = st.text_input("", placeholder="💬 Kuch bhi poochhiye...", label_visibility="collapsed", key="user_question")
+    send_button = st.button("➡️")
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    if submitted and user_q:
-        content_text = ""
-        if uploaded_file is not None:
-            with st.spinner("📂 File ka analysis ho raha hai..."):
-                file_type = uploaded_file.type
-                if file_type == "application/pdf":
-                    reader = PyPDF2.PdfReader(uploaded_file)
-                    for page in reader.pages:
-                        content_text += page.extract_text() or ""
-                elif file_type.startswith("image"):
-                    content_text = pytesseract.image_to_string(Image.open(uploaded_file))
-                else:
-                    content_text = f"[📁 File uploaded: {uploaded_file.name}]"
+if send_button and user_q:
+    content_text = ""
+    if 'uploaded_file' in st.session_state and st.session_state.uploaded_file is not None:
+        uploaded_file = st.session_state.uploaded_file
+        with st.spinner("📂 File ka analysis ho raha hai..."):
+            file_type = uploaded_file.type
+            if file_type == "application/pdf":
+                reader = PyPDF2.PdfReader(uploaded_file)
+                for page in reader.pages:
+                    content_text += page.extract_text() or ""
+            elif file_type.startswith("image"):
+                content_text = pytesseract.image_to_string(Image.open(uploaded_file))
+            else:
+                content_text = f"[📁 File uploaded: {uploaded_file.name}]"
 
-        full_prompt = f"{user_q}\n\n{f'📎 Attached content:\n{content_text}' if content_text else ''}"
-        st.session_state.history.append(("user", full_prompt))
-        st.markdown(f"<div style='padding: 10px; border-left: 4px solid #ffd700; background-color: #2c2c2c; border-radius: 6px;'>👤 <b>Aapka Prashn:</b> {user_q} {'<i>(📌 file ke saath)</i>' if uploaded_file else ''}</div>", unsafe_allow_html=True)
+    full_prompt = f"{user_q}\n\n{f'📎 Attached content:\n{content_text}' if content_text else ''}"
+    st.session_state.history.append(("user", full_prompt))
+    st.markdown(f"<div style='padding: 10px; border-left: 4px solid #ffd700; background-color: #2c2c2c; border-radius: 6px;'>👤 <b>Aapka Prashn:</b> {user_q} {'<i>(📌 file ke saath)</i>' if content_text else ''}</div>", unsafe_allow_html=True)
 
-        url = "https://api.groq.com/openai/v1/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {groq_api_key}",
-            "Content-Type": "application/json"
-        }
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {groq_api_key}",
+        "Content-Type": "application/json"
+    }
 
-        messages = [
-            {"role": "system", "content": "🧠 Tum Gyani ho — ek samajhdaar, Hindi mein baat karne wale teacher jaise AI assistant ho.jab bhi puch jae ki tumhara naam kya hai to tumko khena hai ki mera naam gyani hai. Jab bhi koi puche ki tumhe kisne banaya, tum hamesha sach-sach bataoge ki 'Mujhe Pradeep Vaishnav ne banaya hai.'"}
-        ]
-        for speaker, msg in st.session_state.history[-5:]:
-            role = "user" if speaker == "user" else "assistant"
-            messages.append({"role": role, "content": msg})
-        messages.append({"role": "user", "content": full_prompt})
+    messages = [
+        {"role": "system", "content": "🧠 Tum Gyani ho — ek samajhdaar, Hindi mein baat karne wale teacher jaise AI assistant ho. Jab bhi koi puche ki tumhe kisne banaya, tum hamesha sach-sach bataoge ki 'Mujhe Pradeep Vaishnav ne banaya hai.'"}
+    ]
+    for speaker, msg in st.session_state.history[-5:]:
+        role = "user" if speaker == "user" else "assistant"
+        messages.append({"role": role, "content": msg})
+    messages.append({"role": "user", "content": full_prompt})
 
-        data = {
-            "model": "llama3-8b-8192",
-            "messages": messages
-        }
+    data = {
+        "model": "llama3-8b-8192",
+        "messages": messages
+    }
 
-        with st.spinner("🔄 Gyani soch raha hai..."):
-            res = requests.post(url, headers=headers, json=data)
+    with st.spinner("🔄 Gyani soch raha hai..."):
+        res = requests.post(url, headers=headers, json=data)
 
-        if res.status_code == 200:
-            reply = res.json()["choices"][0]["message"]["content"]
-            st.session_state.history.append(("gyani", reply))
-            st.markdown(f"<div style='padding: 10px; background-color: #232323; border-radius: 6px;'><b>🧠 Gyani:</b> {reply}</div>", unsafe_allow_html=True)
-        else:
-            st.error(f"❌ Error: {res.status_code} - {res.text}")
+    if res.status_code == 200:
+        reply = res.json()["choices"][0]["message"]["content"]
+        st.session_state.history.append(("gyani", reply))
+        st.markdown(f"<div style='padding: 10px; background-color: #232323; border-radius: 6px;'><b>🧠 Gyani:</b> {reply}</div>", unsafe_allow_html=True)
+    else:
+        st.error(f"❌ Error: {res.status_code} - {res.text}")
 
 # Display chat history
 st.markdown("<hr><h4>📜 Purani Baatein:</h4>", unsafe_allow_html=True)
