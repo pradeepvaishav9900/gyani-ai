@@ -28,7 +28,7 @@ st.markdown("""
 if 'history' not in st.session_state:
     st.session_state.history = []
 
-chat_image = st.file_uploader("📷 Image bhejein (optional):", type=["jpg", "jpeg", "png"], key="chat_image")
+uploaded_file = st.file_uploader("📄 File ya photo/video bhejein (PDF, Image, Video):", type=["pdf", "jpg", "jpeg", "png", "mp4", "mov", "avi"], key="chat_image")
 
 # Display chat history
 st.markdown("<hr><h4>📜 Purani Baatein:</h4>", unsafe_allow_html=True)
@@ -104,14 +104,22 @@ with st.form("chat_form", clear_on_submit=True):
         st.markdown("</div>", unsafe_allow_html=True)
 
     if submitted and user_q:
-        image_text = ""
-        if chat_image:
-            with st.spinner("🖼️ Image se gyaan prapt kiya ja raha hai..."):
-                image_text = pytesseract.image_to_string(Image.open(chat_image))
+        content_text = ""
+        if uploaded_file is not None:
+            with st.spinner("📂 File ka analysis ho raha hai..."):
+                file_type = uploaded_file.type
+                if file_type == "application/pdf":
+                    reader = PyPDF2.PdfReader(uploaded_file)
+                    for page in reader.pages:
+                        content_text += page.extract_text() or ""
+                elif file_type.startswith("image"):
+                    content_text = pytesseract.image_to_string(Image.open(uploaded_file))
+                else:
+                    content_text = f"[📁 File uploaded: {uploaded_file.name}]"
 
-        full_prompt = f"{user_q}\n\n{f'🖼️ Image ka content:\n{image_text}' if image_text else ''}"
+        full_prompt = f"{user_q}\n\n{f'📎 Attached content:\n{content_text}' if content_text else ''}"
         st.session_state.history.append(("user", full_prompt))
-        st.markdown(f"<div style='padding: 10px; border-left: 4px solid #ffd700; background-color: #2c2c2c; border-radius: 6px;'>👤 <b>Aapka Prashn:</b> {user_q} {'<i>(🖼️ image ke saath)</i>' if chat_image else ''}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='padding: 10px; border-left: 4px solid #ffd700; background-color: #2c2c2c; border-radius: 6px;'>👤 <b>Aapka Prashn:</b> {user_q} {'<i>(📎 file ke saath)</i>' if uploaded_file else ''}</div>", unsafe_allow_html=True)
 
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {
@@ -120,7 +128,7 @@ with st.form("chat_form", clear_on_submit=True):
         }
 
         messages = [
-            {"role": "system", "content": "🧠 Tum Gyani ho — ek samajhdaar, Hindi mein baat karne wale teacher jaise AI assistant ho. Jab bhi koi puche ki tumhe kisne banaya, tum hamesha sach-sach bataoge ki 'Mujhe Pradeep Vaishnav ne banaya hai.'"}
+            {"role": "system", "content": "🧠 mera naam gyani hai — ek samajhdaar, Hindi mein baat karne wale teacher jaise AI assistant ho. Jab bhi koi puche ki tumhe kisne banaya, tum hamesha sach-sach bataoge ki 'Mujhe Pradeep Vaishnav ne banaya hai.'"}
         ]
         for speaker, msg in st.session_state.history[-5:]:
             role = "user" if speaker == "user" else "assistant"
