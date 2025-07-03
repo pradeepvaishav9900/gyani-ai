@@ -10,7 +10,7 @@ import requests
 st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_icon="🧠")
 
 # Set Groq API key from Streamlit secrets
-groq_api_key = "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"  # 👈 Apni asli Groq API key yahan daalein (testing ke liye)
+groq_api_key = st.secrets["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"]  # Secure way
 
 # Logo and Title Section
 st.markdown("""
@@ -37,7 +37,6 @@ def extract_text_from_image(file):
     return text
 
 text_content = ""
-
 if uploaded_file is not None:
     file_type = uploaded_file.type
     with st.spinner("📚 Gyani file ka vishleshan kar raha hai..."):
@@ -56,11 +55,21 @@ if uploaded_file is not None:
 if 'history' not in st.session_state:
     st.session_state.history = []
 
+# Image uploader for chat
+st.markdown("### 🖼️ Agar aap photo ke saath baat karna chahte hain:")
+chat_image = st.file_uploader("📸 Image bhejein (optional):", type=["jpg", "jpeg", "png"], key="chat_image")
+
 user_q = st.text_input("🧠 Aapka Prashn likhiye:")
 if user_q:
-    st.session_state.history.append(("user", user_q))
-    st.markdown(f"👤 Aapka Prashn: *{user_q}*")
-    response = ""
+    image_text = ""
+    if chat_image:
+        with st.spinner("🖼️ Image se gyaan prapt kiya ja raha hai..."):
+            image_text = extract_text_from_image(chat_image)
+
+    # Create hybrid message with image context
+    full_prompt = f"{user_q}\n\n{f'🖼️ Image ka content:\n{image_text}' if image_text else ''}"
+    st.session_state.history.append(("user", full_prompt))
+    st.markdown(f"👤 Aapka Prashn: *{user_q}* {'(📸 image ke saath)' if chat_image else ''}")
 
     # Prepare Groq API request
     url = "https://api.groq.com/openai/v1/chat/completions"
@@ -71,19 +80,18 @@ if user_q:
 
     # Prepare messages
     messages = [
-        {"role": "system", "content": "🧠 Tum Gyani ho — ek samajhdaar, Hindi mein baat karne wale teacher jaise AI assistant ho. Tumhare jawab asaan, helpful, aur dosti bhare hone chahiye. Agar user ka prashn kisi file se related ho ya technical ho, to use udaharan dekar samjhao."}
+        {"role": "system", "content": "🧠 Tum Gyani ho — ek samajhdaar, Hindi mein baat karne wale teacher jaise AI assistant ho. Tumhare jawab asaan, helpful, aur dosti bhare hone chahiye. Agar user ka prashn kisi file ya image se related ho, to use udaharan dekar samjhao."}
     ]
     for speaker, msg in st.session_state.history[-5:]:
         role = "user" if speaker == "user" else "assistant"
         messages.append({"role": role, "content": msg})
-    messages.append({"role": "user", "content": user_q})
+    messages.append({"role": "user", "content": full_prompt})
 
     data = {
-        "model": "meta-llama/llama-4-scout-17b-16e-instruct",
+        "model": "llama3-8b-8192",
         "messages": messages
     }
 
-    # Make the API call
     with st.spinner("🔄 Gyani soch raha hai..."):
         res = requests.post(url, headers=headers, json=data)
 
@@ -110,7 +118,7 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Suggested questions for better interaction
+# Suggested questions
 st.markdown("""
     <div style='margin-top:30px;'>
         <h4>📝 Aap yeh prashn bhi pooch sakte hain:</h4>
