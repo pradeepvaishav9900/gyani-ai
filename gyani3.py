@@ -15,61 +15,82 @@ groq_api_key = "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"
 # If tesseract is not found, set this path manually
 pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 
-# Logo and Title Section
-st.markdown("""
-    <div style='text-align: center;'>
-        <img src='https://i.imgur.com/Wr9vB2M.png' alt='Gyani Logo' width='120'/><br>
-        <h1 style='margin-top: 10px;'>🧠 Gyani</h1>
-        <h4 style='color: gray;'>Developed by Pradeep Vaishnav</h4>
-    </div>
-    <hr>
-""", unsafe_allow_html=True)
-
-if 'history' not in st.session_state:
-    st.session_state.history = []
-
-# Chat input box with single Enter submission
+# Custom Styling (GPT like)
 st.markdown("""
     <style>
-    .custom-input-box {
+    .main-header {
+        text-align: center;
+        margin-top: 2rem;
+    }
+    .upload-block {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .chat-container {
+        display: flex;
+        justify-content: center;
         position: fixed;
-        bottom: 10px;
+        bottom: 20px;
         left: 50%;
         transform: translateX(-50%);
         width: 90%;
         max-width: 720px;
-        display: flex;
         background-color: #1f1f1f;
-        padding: 10px;
-        border-radius: 12px;
-        z-index: 999;
+        border-radius: 20px;
+        padding: 10px 20px;
     }
-    .custom-input-box input[type=text] {
+    .chat-container input[type=text] {
         flex-grow: 1;
-        margin-right: 8px;
-        border-radius: 8px;
+        border: none;
         background-color: #2b2b2b;
         color: white;
-        border: none;
-        padding: 10px;
+        padding: 14px;
+        font-size: 16px;
+        border-radius: 12px;
+        margin-right: 10px;
     }
-    .custom-input-box button {
+    .chat-container button {
         background-color: #4CAF50;
-        border: none;
-        border-radius: 8px;
-        padding: 8px 12px;
         color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 10px 16px;
+        font-size: 18px;
         cursor: pointer;
     }
     </style>
 """, unsafe_allow_html=True)
 
-input_container = st.container()
-with input_container:
-    st.markdown("<div class='custom-input-box'>", unsafe_allow_html=True)
-    user_q = st.text_input("", placeholder="💬 Kuch bhi poochhiye...", label_visibility="collapsed", key="user_question")
-    send_button = st.button("➡️")
-    st.markdown("</div>", unsafe_allow_html=True)
+# Header
+st.markdown("""
+    <div class='main-header'>
+        <h1 style='font-size: 2.5rem;'>🧠 Gyani</h1>
+        <h4 style='color: gray;'>Developed by Pradeep Vaishnav</h4>
+    </div>
+    <hr>
+""", unsafe_allow_html=True)
+
+# File Upload
+st.markdown("""
+    <div class='upload-block'>
+        <label><b>📤 File ya photo/video bhejein (PDF, Image, Video):</b></label>
+    </div>
+""", unsafe_allow_html=True)
+uploaded_file = st.file_uploader("", type=["pdf", "png", "jpg", "jpeg", "mp4", "mov", "avi", "mpeg4"])
+if uploaded_file:
+    st.session_state.uploaded_file = uploaded_file
+
+# Session history
+if 'history' not in st.session_state:
+    st.session_state.history = []
+
+# Chat box
+st.markdown("""
+    <div class='chat-container'>
+""", unsafe_allow_html=True)
+user_q = st.text_input("", placeholder="Ask anything...", label_visibility="collapsed", key="user_question")
+send_button = st.button("➡️")
+st.markdown("</div>", unsafe_allow_html=True)
 
 if send_button and user_q:
     content_text = ""
@@ -88,8 +109,7 @@ if send_button and user_q:
 
     full_prompt = f"{user_q}\n\n{f'📎 Attached content:\n{content_text}' if content_text else ''}"
     st.session_state.history.append(("user", full_prompt))
-    st.markdown(f"<div style='padding: 10px; border-left: 4px solid #ffd700; background-color: #2c2c2c; border-radius: 6px;'>👤 <b>Aapka Prashn:</b> {user_q} {'<i>(📌 file ke saath)</i>' if content_text else ''}</div>", unsafe_allow_html=True)
-
+    
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {groq_api_key}",
@@ -115,35 +135,21 @@ if send_button and user_q:
     if res.status_code == 200:
         reply = res.json()["choices"][0]["message"]["content"]
         st.session_state.history.append(("gyani", reply))
-        st.markdown(f"<div style='padding: 10px; background-color: #232323; border-radius: 6px;'><b>🧠 Gyani:</b> {reply}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='padding: 12px; background-color: #1f1f1f; border-radius: 12px; margin: 10px auto; max-width: 720px;'><b>🧠 Gyani:</b> {reply}</div>", unsafe_allow_html=True)
     else:
         st.error(f"❌ Error: {res.status_code} - {res.text}")
 
-# Display chat history
-st.markdown("<hr><h4>📜 Purani Baatein:</h4>", unsafe_allow_html=True)
+# Show chat history cleanly
 for speaker, msg in st.session_state.history:
-    if speaker == "user":
-        st.markdown(f"<div style='padding: 8px; background-color: #2a2a2a; border-left: 4px solid #ffcc00;'>👤 <b>User:</b> {msg}</div>", unsafe_allow_html=True)
-    else:
-        st.markdown(f"<div style='padding: 8px; background-color: #1f1f1f; border-left: 4px solid #00cc99;'>🧠 <b>Gyani:</b> {msg}</div>", unsafe_allow_html=True)
+    role = "👤 User" if speaker == "user" else "🧠 Gyani"
+    bubble_color = "#2a2a2a" if speaker == "user" else "#1f1f1f"
+    st.markdown(f"<div style='padding: 12px; background-color: {bubble_color}; border-radius: 12px; margin: 8px auto; max-width: 720px;'><b>{role}:</b> {msg}</div>", unsafe_allow_html=True)
 
-# Footer and Suggestions
+# Footer
 st.markdown("""
     <hr>
-    <div style='text-align: center; color: gray;'>
-        🤖 <strong>Gyani</strong> Chatbot ka nirmaan <strong>Pradeep Vaishnav</strong> dwara kiya gaya hai.<br>
+    <div style='text-align: center; color: gray; font-size: 14px;'>
+        🤖 <strong>Gyani</strong> banaya gaya hai <strong>Pradeep Vaishnav</strong> dwara.<br>
         Jai Jagannath 🙏
     </div>
-    <div style='margin-top:30px;'>
-        <h4>📝 Aap yeh prashn bhi pooch sakte hain:</h4>
-        <ul>
-            <li>Python me loop kaise chalta hai?</li>
-            <li>Newton ka pehla niyam kya hai?</li>
-            <li>HTML ka basic structure kya hota hai?</li>
-            <li>Is file me syllabus hai kya?</li>
-        </ul>
-    </div>
 """, unsafe_allow_html=True)
-
-# Timestamp
-st.markdown(f"<p style='text-align: right; font-size: small; color: gray;'>🥒 {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>", unsafe_allow_html=True)
