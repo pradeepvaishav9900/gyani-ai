@@ -101,8 +101,8 @@ if user_q:
     else:
         st.error(f"❌ Error: {res.status_code} - {res.text}")
 
-    # Clear input
-    st.experimental_rerun()
+    # Clear input by resetting the value manually (no rerun)
+    st.session_state.user_q = ""
 
 # Show chat history cleanly
 for speaker, msg in st.session_state.history:
