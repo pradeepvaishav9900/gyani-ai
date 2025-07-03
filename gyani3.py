@@ -35,7 +35,7 @@ st.markdown("""
         border-radius: 20px;
         padding: 10px 20px;
     }
-    .chat-container input[type=text] {
+    .chat-input {
         flex-grow: 1;
         border: none;
         background-color: #2b2b2b;
@@ -44,15 +44,6 @@ st.markdown("""
         font-size: 16px;
         border-radius: 12px;
         margin-right: 10px;
-    }
-    .chat-container button {
-        background-color: #4CAF50;
-        color: white;
-        border: none;
-        border-radius: 12px;
-        padding: 10px 16px;
-        font-size: 18px;
-        cursor: pointer;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -69,32 +60,17 @@ st.markdown("""
 # Session history
 if 'history' not in st.session_state:
     st.session_state.history = []
-if 'user_question' not in st.session_state:
-    st.session_state.user_question = ""
 
 # Chat input interface
 st.markdown("""
     <div class='chat-container'>
 """, unsafe_allow_html=True)
-user_q = st.text_input("", value=st.session_state.user_question, placeholder="Ask anything...", label_visibility="collapsed")
+
+user_q = st.text_input("", key="user_q", placeholder="Ask anything...", label_visibility="collapsed")
 st.markdown("</div>", unsafe_allow_html=True)
 
-if user_q != "" and user_q != st.session_state.user_question:
-    st.session_state.user_question = user_q
+if user_q:
     content_text = ""
-    if 'uploaded_file' in st.session_state and st.session_state.uploaded_file is not None:
-        uploaded_file = st.session_state.uploaded_file
-        with st.spinner("📂 File ka analysis ho raha hai..."):
-            file_type = uploaded_file.type
-            if file_type == "application/pdf":
-                reader = PyPDF2.PdfReader(uploaded_file)
-                for page in reader.pages:
-                    content_text += page.extract_text() or ""
-            elif file_type.startswith("image"):
-                content_text = pytesseract.image_to_string(Image.open(uploaded_file))
-            else:
-                content_text = f"[📁 File uploaded: {uploaded_file.name}]"
-
     full_prompt = f"{user_q}\n\n{f'📎 Attached content:\n{content_text}' if content_text else ''}"
     st.session_state.history.append(("user", full_prompt))
 
@@ -125,8 +101,8 @@ if user_q != "" and user_q != st.session_state.user_question:
     else:
         st.error(f"❌ Error: {res.status_code} - {res.text}")
 
-    # Clear question
-    st.session_state.user_question = ""
+    # Clear input
+    st.experimental_rerun()
 
 # Show chat history cleanly
 for speaker, msg in st.session_state.history:
