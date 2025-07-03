@@ -28,53 +28,47 @@ st.markdown("""
 if 'history' not in st.session_state:
     st.session_state.history = []
 
-# Stylish chat interface box at bottom like screenshot
+chat_image = st.file_uploader("📷 Image bhejein (optional):", type=["jpg", "jpeg", "png"], key="chat_image")
+
+# Custom styled textbox and send button (bottom sticky)
 st.markdown("""
 <style>
-.chat-bar {
+.custom-box {
     position: fixed;
-    bottom: 1rem;
+    bottom: 10px;
     left: 50%;
     transform: translateX(-50%);
     width: 95%;
     max-width: 700px;
+    background-color: #2b2b2b;
+    padding: 10px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
-    background: #2b2b2b;
-    border-radius: 20px;
-    padding: 10px 15px;
-    box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
     z-index: 9999;
 }
-.chat-bar input {
-    flex: 1;
-    padding: 8px 12px;
-    border-radius: 10px;
+.custom-box input {
+    flex-grow: 1;
     border: none;
-    background: #1c1c1c;
-    color: #fff;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-right: 10px;
+    background-color: #1c1c1c;
+    color: white;
 }
-.chat-bar button {
-    margin-left: 10px;
-    padding: 8px 15px;
+.custom-box button {
     background-color: #4CAF50;
     border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
     color: white;
-    border-radius: 10px;
     cursor: pointer;
 }
 </style>
-<div class="chat-bar">
-    <form action="#" method="post">
-        <input name="user_input" placeholder="💬 Kuch bhi poochhiye...">
-        <button type="submit">➡️</button>
-    </form>
-</div>
 """, unsafe_allow_html=True)
 
-chat_image = st.file_uploader("", type=["jpg", "jpeg", "png"], key="chat_image")
-user_q = st.text_input("", key="user_input_box")
-submit = st.button("Send", key="submit_button")
+user_q = st.text_input("💬 Aapka Prashn likhiye:", key="user_input_box")
+submit = st.button("➡️", key="submit_button")
 
 if user_q or submit:
     image_text = ""
