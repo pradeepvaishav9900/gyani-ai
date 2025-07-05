@@ -28,7 +28,7 @@ with col1:
         submit = st.form_submit_button("💬")
 
 with col2:
-    uploaded_file = st.file_uploader("", type=["pdf", "png", "jpg", "jpeg"], label_visibility="collapsed")
+    uploaded_file = st.file_uploader("📎", type=["pdf", "png", "jpg", "jpeg"], label_visibility="collapsed")
 
 extracted_text = ""
 image_uploaded = False
