@@ -26,7 +26,7 @@ with col1:
         user_input = st.text_input("", placeholder="(apko kya janna hai)", key="input_box")
         submit = st.form_submit_button("💬")
 
-with col2:
+with col1:
    
     uploaded_file = st.file_uploader("", type=["pdf", "png", "jpg", "jpeg"], label_visibility="collapsed")
     st.markdown("<div style='text-align: center;'></div>", unsafe_allow_html=True)
