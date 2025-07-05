@@ -6,9 +6,6 @@ import io
 import base64
 import datetime
 import requests
-from gtts import gTTS
-import streamlit_audio as st_audio
-import tempfile
 
 st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_icon="🧠")
 
@@ -125,15 +122,7 @@ if submitted and user_q:
     if res.status_code == 200:
         reply = res.json()["choices"][0]["message"]["content"]
         st.session_state.history.append(("gyani", reply))
-
         st.markdown(f"<div style='padding: 12px; background-color: #1f1f1f; border-radius: 12px; margin: 10px auto; max-width: 720px;'><b>🧠 Gyani:</b> {reply}</div>", unsafe_allow_html=True)
-
-        # 🎧 Text-to-Speech audio
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
-            tts = gTTS(text=reply, lang='hi')
-            tts.save(fp.name)
-            st_audio.audio(fp.name, format="audio/mp3")
-
     else:
         st.error(f"❌ Error: {res.status_code} - {res.text}")
 
