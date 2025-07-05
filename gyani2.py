@@ -70,10 +70,12 @@ if submit and user_input:
                 st.session_state.history.append(("gyani", "🖼️ Image edited as per your prompt."))
 
     else:
-        full_prompt = f"User query: {query}\n\nIf helpful, use this uploaded PDF content:\n'''{extracted_text}'''" if extracted_text else query
+        # Trim extracted text for context
+        trimmed_text = extracted_text[:1500] + ("..." if len(extracted_text) > 1500 else "")
+        full_prompt = f"Gyani ko query ka jawab do: '{query}'\n\nAgar PDF content madadgar ho to use bhi dekho:\n'''{trimmed_text}'''" if trimmed_text else query
 
         messages = [
-            {"role": "system", "content": "🧠 Tum Gyani ho — ek samajhdaar, Hindi mein baat karne wale teacher jaise AI assistant ho. Jab bhi koi puche ki tumhe kisne banaya, tum hamesha sach-sach bataoge ki 'Mujhe Pradeep Vaishnav ne banaya hai.'"}
+            {"role": "system", "content": "🧠 Tum Gyani ho — ek samajhdaar, Hindi mein baat karne wale teacher jaise AI assistant ho. Jab bhi koi puche ki tumhe kisne banaya, tum hamesha sach-sach bataoge ki 'Mujhe Pradeep Vaishnav ne banaya hai.' Tumhare jawab sadaran, Hindi bhasha mein aur clearly hon."}
         ]
         for speaker, msg in st.session_state.history[-5:]:
             role = "user" if speaker == "user" else "assistant"
