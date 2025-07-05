@@ -63,7 +63,10 @@ if user_input:
                 },
                 json={
                     "model": "llama3-8b-8192",
-                    "messages": [{"role": "user", "content": user_input}]
+                    "messages": [
+    {"role": "system", "content": "Tum ek helpful, simple Hindi aur English bolne wale assistant ho. Humesha simple, short aur clean reply do. Funny ya alag language mat use karo."},
+    {"role": "user", "content": user_input}
+]
                 }
             )
             if response.status_code == 200:
