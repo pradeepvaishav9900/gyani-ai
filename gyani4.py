@@ -8,7 +8,7 @@ st.title("🧠 Gyani v2 - Smart + Cloud Compatible")
 st.markdown("#### Developed by Pradeep Vaishnav")
 
 # Load API Key
-groq_api_key = st.secrets.get("GROQ_API_KEY", "")
+groq_api_key = "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"
 
 # Feature Toggles
 menu = st.sidebar.selectbox("🗭 Choose Feature", [
