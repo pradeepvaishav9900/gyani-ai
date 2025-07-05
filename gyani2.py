@@ -23,6 +23,13 @@ if uploaded_file:
     reader = PyPDF2.PdfReader(uploaded_file)
     extracted_text = "".join(page.extract_text() or "" for page in reader.pages)
 
+    # Show for debugging
+    if extracted_text.strip():
+        st.markdown("✅ **Extracted PDF Content:**")
+        st.code(extracted_text[:1000] + ("..." if len(extracted_text) > 1000 else ""))
+    else:
+        st.warning("⚠️ PDF se koi text extract nahi ho paya. Shayad ye image-only scan ho.")
+
 # Smart Input in a form (Enter to submit)
 with st.form(key="chat_form", clear_on_submit=True):
     user_input = st.text_input("💬 Gyani se poochho:", placeholder="Type your query...", key="input_box")
@@ -33,7 +40,7 @@ if submit and user_input:
     st.session_state.history.append(("user", query))
 
     # Full prompt with file context if available
-    full_prompt = query + (f"\n\n📎 Attached content:\n{extracted_text}" if extracted_text else "")
+    full_prompt = f"{query}\n\nIf needed, here is context from uploaded file:\n'''{extracted_text}'''" if extracted_text else query
 
     # Chat messages format
     messages = [
