@@ -23,12 +23,9 @@ if uploaded_file:
     reader = PyPDF2.PdfReader(uploaded_file)
     extracted_text = "".join(page.extract_text() or "" for page in reader.pages)
 
-# Smart Input Form
-text_input_key = "input_box"
-with st.form("ask_gyani"):
-    user_input = st.text_input("💬 Gyani se poochho:", placeholder="Type your query...", key=text_input_key)
-    submitted = st.form_submit_button("💬 Send")
-
-if submitted and user_input:
+# Smart Input (No form, enter-to-submit enabled)
+user_input = st.text_input("💬 Gyani se poochho:", placeholder="Type your query...", key="input_box")
+if user_input:
     query = user_input.lower()
-    
+    # Add your logic here to process query
+    st.success(f"📥 You asked: {query}")
