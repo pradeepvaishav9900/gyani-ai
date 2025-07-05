@@ -75,10 +75,13 @@ if submit and user_input:
 
     else:
         trimmed_text = extracted_text[:1500] + ("..." if len(extracted_text) > 1500 else "")
-        full_prompt = f"Gyani ko query ka jawab do: '{query}'\n\nAgar PDF content madadgar ho to use bhi dekho:\n'''{trimmed_text}'''" if trimmed_text else query
+        if trimmed_text:
+            full_prompt = f"User ka sawal: {query}\n\nYeh file ka content bhi dekhna hai agar helpful ho:\n{trimmed_text}"
+        else:
+            full_prompt = query
 
         messages = [
-            {"role": "system", "content": "🧠 Tum Gyani ho — ek samajhdaar, Hindi mein baat karne wale teacher jaise AI assistant ho. Jab bhi koi puche ki tumhe kisne banaya, tum hamesha sach-sach bataoge ki 'Mujhe Pradeep Vaishnav ne banaya hai.' Tumhare jawab sadaran, Hindi bhasha mein aur clearly hon."}
+            {"role": "system", "content": "Tum ek AI assistant ho jiska naam Gyani hai. Tum Hindi mein simple, helpful aur seedhe jawab dete ho. Agar koi puche ki tumhe kisne banaya, to hamesha sach batana: 'Mujhe Pradeep Vaishnav ne banaya hai.' Agar koi file lagi ho to use dhyan se padho aur us par based jawab do."}
         ]
         for speaker, msg in st.session_state.history[-5:]:
             role = "user" if speaker == "user" else "assistant"
