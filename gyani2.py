@@ -27,5 +27,46 @@ if uploaded_file:
 user_input = st.text_input("💬 Gyani se poochho:", placeholder="Type your query...", key="input_box")
 if user_input:
     query = user_input.lower()
-    # Add your logic here to process query
-    st.success(f"📥 You asked: {query}")
+    st.session_state.history.append(("user", query))
+
+    # Full prompt with file context if available
+    full_prompt = query + (f"\n\n📎 Attached content:\n{extracted_text}" if extracted_text else "")
+
+    # Chat messages format
+    messages = [
+        {"role": "system", "content": "🧠 Tum Gyani ho — ek samajhdaar, Hindi mein baat karne wale teacher jaise AI assistant ho. Jab bhi koi puche ki tumhe kisne banaya, tum hamesha sach-sach bataoge ki 'Mujhe Pradeep Vaishnav ne banaya hai.'"}
+    ]
+    for speaker, msg in st.session_state.history[-5:]:
+        role = "user" if speaker == "user" else "assistant"
+        messages.append({"role": role, "content": msg})
+    messages.append({"role": "user", "content": full_prompt})
+
+    # Call Groq API
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {groq_api_key}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "model": "llama3-8b-8192",
+        "messages": messages
+    }
+
+    with st.spinner("🧠 Gyani soch raha hai..."):
+        response = requests.post(url, headers=headers, json=data)
+
+    if response.status_code == 200:
+        reply = response.json()["choices"][0]["message"]["content"]
+        st.session_state.history.append(("gyani", reply))
+        st.success(f"🧠 Gyani: {reply}")
+    else:
+        st.error("❌ Groq API Error: " + response.text)
+
+# Show chat history
+st.markdown("---")
+for speaker, msg in st.session_state.history:
+    role = "👤 User" if speaker == "user" else "🧠 Gyani"
+    bubble_color = "#2a2a2a" if speaker == "user" else "#1f1f1f"
+    st.markdown(f"<div style='padding: 12px; background-color: {bubble_color}; border-radius: 12px; margin: 8px auto; max-width: 720px;'><b>{role}:</b> {msg}</div>", unsafe_allow_html=True)
+
+st.markdown("<hr><div style='text-align: center; color: gray;'>🤖 Gyani banaya gaya hai <b>Pradeep Vaishnav</b> dwara 🙏</div>", unsafe_allow_html=True)
