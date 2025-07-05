@@ -71,6 +71,15 @@ if submit and user_input:
 
             if edited_image:
                 st.image(edited_image, caption="🖼️ Edited Image", use_column_width=True)
+
+                # Allow user to download the edited image
+                buffered = io.BytesIO()
+                edited_image.save(buffered, format="PNG")
+                img_bytes = buffered.getvalue()
+                b64 = base64.b64encode(img_bytes).decode()
+                href = f'<a href="data:image/png;base64,{b64}" download="gyani_edited_image.png">📥 Download Edited Image</a>'
+                st.markdown(href, unsafe_allow_html=True)
+
                 st.session_state.history.append(("gyani", "🖼️ Image edited as per your prompt."))
 
     else:
