@@ -27,6 +27,7 @@ with col1:
         submit = st.form_submit_button("💬")
 
 with col2:
+    upload_button = st.button("Chose File 📂")  # customize the button text and add an emoji
     uploaded_file = st.file_uploader("", type=["pdf", "png", "jpg", "jpeg"], label_visibility="collapsed")
     st.markdown("<div style='text-align: center;'>📌</div>", unsafe_allow_html=True)
 
