@@ -1,110 +1,85 @@
 import streamlit as st
+import requests
 import PyPDF2
-import pytesseract
-from PIL import Image
 import io
-import base64
-import datetime
+import wikipedia
+from langdetect import detect
+from googletrans import Translator
 
-st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_icon="🧠")
+st.set_page_config(page_title="Gyani v2 - Smart AI Assistant", page_icon="🧠")
+st.title("🧠 Gyani v2 - Smart + Auto-Detect Mode")
+st.markdown("#### Developed by Pradeep Vaishnav")
 
-# Logo and Title Section
-st.markdown("""
-    <div style='text-align: center;'>
-        <img src='https://i.imgur.com/Wr9vB2M.png' alt='Gyani Logo' width='120'/><br>
-        <h1 style='margin-top: 10px;'>🧠 Gyani</h1>
-        <h4 style='color: gray;'>Developed by Pradeep Vaishnav</h4>
-    </div>
-    <hr>
-""", unsafe_allow_html=True)
+# Load API Key
+groq_api_key = "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"
 
-uploaded_file = st.file_uploader("📤 File Upload karein (PDF ya Image):", type=["pdf", "png", "jpg", "jpeg"])
-
-def extract_text_from_pdf(file):
-    reader = PyPDF2.PdfReader(file)
-    text = ""
-    for page in reader.pages:
-        text += page.extract_text()
-    return text
-
-def extract_text_from_image(file):
-    image = Image.open(file)
-    text = pytesseract.image_to_string(image)
-    return text
-
-text_content = ""
-
-if uploaded_file is not None:
-    file_type = uploaded_file.type
-    with st.spinner("📚 Gyani file ka vishleshan kar raha hai..."):
-        if file_type == "application/pdf":
-            text_content = extract_text_from_pdf(uploaded_file)
-        elif "image" in file_type:
-            text_content = extract_text_from_image(uploaded_file)
-
-    st.success("✅ File se gyaan prapt ho gaya!")
-    st.text_area("📖 Extracted Content:", text_content[:3000], height=300)
-
-# Chat History
-if 'history' not in st.session_state:
+# Initialize history
+if "history" not in st.session_state:
     st.session_state.history = []
 
-user_q = st.text_input("🧠 Aapka Prashn likhiye:")
-if user_q:
-    st.session_state.history.append(("user", user_q))
-    st.markdown(f"👤 Aapka Prashn: *{user_q}*")
-    response = ""
+# File upload (optional for summarizer)
+uploaded_file = st.file_uploader("📂 Upload a PDF (optional)", type=["pdf"])
+extracted_text = ""
+if uploaded_file:
+    reader = PyPDF2.PdfReader(uploaded_file)
+    extracted_text = "".join(page.extract_text() or "" for page in reader.pages)
 
-    if user_q.lower() in text_content.lower():
-        response = "🧠 Gyani: Bahut accha prashn! Haan, iska uttar mujhe aapke file me mil gaya hai. 👇"
-        st.success(response)
-    elif any(k in user_q.lower() for k in ["python", "java", "html", "chemistry", "physics"]):
-        response = "🧠 Gyani: Hmm... Yeh ek technical prashn lagta hai. Chaliye, main aapko iske baare mein thoda batata hoon:"
-        st.info(response)
-        if "python" in user_q.lower():
-            st.code("for i in range(5):\n    print(i)", language="python")
-        elif "java" in user_q.lower():
-            st.code("public class Main {\n public static void main(String[] args) {\n  System.out.println(\"Hello\");\n }\n}", language="java")
-        elif "html" in user_q.lower():
-            st.code("<html><body>Hello</body></html>", language="html")
-        elif "physics" in user_q.lower():
-            st.markdown("📘 Newton ka doosra niyam: **F = m × a** (Bal = Dravya × Veegh)")
-        elif "chemistry" in user_q.lower():
-            st.markdown("🧪 Acid ka pH value hota hai **7 se kam**, jaise ki **HCl** ek strong acid hai.")
-    else:
-        response = "🧠 Gyani: Mujhe khed hai, yeh prashn mujhe file me ya mere gyaan me nahi mila. Par main aur seekh raha hoon – aap mujhe naye sawal poochhte rahiye! 🙏"
-        st.warning(response)
+# Smart Input
+user_input = st.text_input("💬 Gyani se poochho:", placeholder="Type your query...")
 
-    st.session_state.history.append(("gyani", response))
+if user_input:
+    query = user_input.lower()
+    try:
+        # Auto-detect modes
+        if query.startswith("/help") or query.startswith("/about"):
+            st.info("🧠 Gyani v2 - Smart Assistant. Features: Chat, Wiki, Translate, PDF Reader, Math.")
 
-# Display full conversation
-st.markdown("<hr><h4>📜 Purani Baatein:</h4>", unsafe_allow_html=True)
-for speaker, msg in st.session_state.history:
-    if speaker == "user":
-        st.markdown(f"👤 **User**: {msg}")
-    else:
-        st.markdown(f"🧠 **Gyani**: {msg}")
+        elif any(word in query for word in ["who is", "history", "कौन", "था"]):
+            lang = detect(user_input)
+            wikipedia.set_lang(lang if lang in ["en", "hi"] else "en")
+            result = wikipedia.summary(user_input, sentences=3)
+            st.success(f"🌐 Wikipedia Result:\n{result}")
 
-st.markdown("""
-    <hr>
-    <div style='text-align: center; color: gray;'>
-        🤖 <strong>Gyani</strong> Chatbot ka nirmaan <strong>Pradeep Vaishnav</strong> dwara kiya gaya hai.<br>
-        Jai Jagannath 🙏
-    </div>
-""", unsafe_allow_html=True)
+        elif any(x in query for x in ["translate", "अनुवाद"]):
+            translator = Translator()
+            lang = detect(user_input)
+            to_lang = "hi" if lang == "en" else "en"
+            translated = translator.translate(user_input, dest=to_lang).text
+            st.success(f"🌍 Translated ({to_lang.upper()}): {translated}")
 
-# Suggested questions for better interaction
-st.markdown("""
-    <div style='margin-top:30px;'>
-        <h4>📝 Aap yeh prashn bhi pooch sakte hain:</h4>
-        <ul>
-            <li>Python me loop kaise chalta hai?</li>
-            <li>Newton ka pehla niyam kya hai?</li>
-            <li>HTML ka basic structure kya hota hai?</li>
-            <li>Is file me syllabus hai kya?</li>
-        </ul>
-    </div>
-""", unsafe_allow_html=True)
+        elif any(sym in query for sym in ["+", "-", "*", "/", "=", "solve"]):
+            try:
+                result = eval(query.split("=")[0])
+                st.success(f"🧮 Result: {result}")
+            except:
+                st.error("❌ Unable to solve the expression.")
 
-# Timestamp for fun
-st.markdown(f"<p style='text-align: right; font-size: small; color: gray;'>🕒 {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>", unsafe_allow_html=True)
+        elif "summarize" in query or (uploaded_file and "pdf" in query):
+            if extracted_text:
+                st.text_area("📄 Extracted Text:", value=extracted_text[:2000], height=300)
+            else:
+                st.warning("⚠️ No PDF uploaded to summarize.")
+
+        else:
+            # Default: Chat with Gyani
+            st.session_state.history.append(("user", user_input))
+            response = requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {groq_api_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": "llama3-8b-8192",
+                    "messages": [{"role": "user", "content": user_input}]
+                }
+            )
+            if response.status_code == 200:
+                reply = response.json()["choices"][0]["message"]["content"]
+                st.session_state.history.append(("gyani", reply))
+                st.markdown(f"**🧠 Gyani:** {reply}")
+            else:
+                st.error("❌ Groq response error")
+
+    except Exception as e:
+        st.warning(f"⚠️ Error: {str(e)}")
