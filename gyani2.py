@@ -42,8 +42,8 @@ if submitted and user_input:
             lang = detect(user_input)
             wikipedia.set_lang(lang if lang in ["en", "hi"] else "en")
             result = wikipedia.summary(user_input, sentences=3)
-           st.success(f"🌐 Wikipedia Result:\\n{result}")
-
+            st.success(f"""🌐 Wikipedia Result:
+{result}""")
 
         elif any(sym in query for sym in ["+", "-", "*", "/", "=", "solve"]):
             try:
