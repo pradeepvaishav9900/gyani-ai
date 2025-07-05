@@ -23,10 +23,14 @@ if uploaded_file:
     reader = PyPDF2.PdfReader(uploaded_file)
     extracted_text = "".join(page.extract_text() or "" for page in reader.pages)
 
-# Smart Input
-user_input = st.text_input("💬 Gyani se poochho:", placeholder="Type your query...")
+# Smart Input Form
+text_input_key = "input_box"
+with st.form("ask_gyani"):
+    user_input = st.text_input("💬 Gyani se poochho:", placeholder="Type your query...", key=text_input_key)
+    submitted = st.form_submit_button("💬 Send")
 
-if user_input:
+if submitted and user_input:
+    st.session_state[text_input_key] = ""  # Clear input after submit
     query = user_input.lower()
     try:
         # Auto-detect modes
@@ -64,9 +68,9 @@ if user_input:
                 json={
                     "model": "llama3-8b-8192",
                     "messages": [
-    {"role": "system", "content": "Tum ek helpful, simple Hindi aur English bolne wale assistant ho. Humesha simple, short aur clean reply do. Funny ya alag language mat use karo."},
-    {"role": "user", "content": user_input}
-]
+                        {"role": "system", "content": "Tum ek helpful, simple Hindi aur English bolne wale assistant ho. Humesha simple, short aur clean reply do. Funny ya alag language mat use karo. Jab bhi koi puche ki tumhe kisne banaya, tum hamesha bataoge: 'Mujhe Pradeep Vaishnav ne banaya hai.'"},
+                        {"role": "user", "content": user_input}
+                    ]
                 }
             )
             if response.status_code == 200:
