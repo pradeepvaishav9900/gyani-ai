@@ -1,148 +1,92 @@
 import streamlit as st
-import PyPDF2
-import pytesseract
-from PIL import Image, ImageDraw, ImageFont
-import io
-import base64
-import datetime
 import requests
-from rembg import remove
+import PyPDF2
+import io
 
-st.set_page_config(page_title="Gyani - AI Assistant by Pradeep Vaishnav", page_icon="🧠")
+st.set_page_config(page_title="Gyani v2 - Smart AI Assistant", page_icon="🧠")
+st.title("🧠 Gyani v2 - Smart + Cloud Compatible")
+st.markdown("#### Developed by Pradeep Vaishnav")
 
-# Direct Groq API key (for testing only)
-groq_api_key = "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"
+# Load API Key
+groq_api_key = st.secrets.get("GROQ_API_KEY", "")
 
-# If tesseract is not found, set this path manually
-pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
+# Feature Toggles
+menu = st.sidebar.selectbox("🗭 Choose Feature", [
+    "💬 Chat with Gyani",
+    "📄 PDF Summarizer",
+    "🌐 Wikipedia Search",
+    "🌍 Translate (EN <-> HI)",
+    "🧠 Memory Mode",
+    "📌 Commands (/help, /about)",
+    "🏢 Smart File Tagging",
+    "📚 Context-aware Chat",
+    "🧮 Math Solver",
+    "📰 Current Affairs (News)"
+])
 
-# Custom Styling (GPT like)
-st.markdown("""
-    <style>
-    .main-header {
-        text-align: center;
-        margin-top: 2rem;
-    }
-    .chat-container {
-        display: flex;
-        justify-content: center;
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 90%;
-        max-width: 720px;
-        background-color: #1f1f1f;
-        border-radius: 20px;
-        padding: 10px 20px;
-    }
-    .chat-input {
-        flex-grow: 1;
-        border: none;
-        background-color: #2b2b2b;
-        color: white;
-        padding: 14px;
-        font-size: 16px;
-        border-radius: 12px;
-        margin-right: 10px;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# Header
-st.markdown("""
-    <div class='main-header'>
-        <h1 style='font-size: 2.5rem;'>🧠 Gyani</h1>
-        <h4 style='color: gray;'>Developed by Pradeep Vaishnav</h4>
-    </div>
-    <hr>
-""", unsafe_allow_html=True)
-
-# Session history
-if 'history' not in st.session_state:
+# Initialize history
+if "history" not in st.session_state:
     st.session_state.history = []
 
-# File uploader for image editing
-image_file = st.file_uploader("🖼️ Photo upload karein (optional)", type=["jpg", "jpeg", "png"])
+# Chat with Gyani (Groq API)
+if menu == "💬 Chat with Gyani":
+    with st.form("chat_form", clear_on_submit=True):
+        user_input = st.text_input("Aapka prashn:", placeholder="Gyani se poochho...")
+        submitted = st.form_submit_button("💬 Send")
+    if submitted and user_input:
+        st.session_state.history.append(("user", user_input))
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {groq_api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "llama3-8b-8192",
+                "messages": [{"role": "user", "content": user_input}]
+            }
+        )
+        if response.status_code == 200:
+            reply = response.json()["choices"][0]["message"]["content"]
+            st.session_state.history.append(("gyani", reply))
+            st.markdown(f"**🧠 Gyani:** {reply}")
+        else:
+            st.error("❌ Groq response error")
 
-# Chat input interface
-st.markdown("""
-    <div class='chat-container'>
-""", unsafe_allow_html=True)
+# PDF Summarizer
+elif menu == "📄 PDF Summarizer":
+    pdf = st.file_uploader("Upload PDF", type=["pdf"])
+    if pdf:
+        reader = PyPDF2.PdfReader(pdf)
+        text = "".join(page.extract_text() or "" for page in reader.pages)
+        st.text_area("📄 Extracted Text", value=text[:2000], height=300)
 
-user_q = st.text_input("", key="user_q", placeholder="Ask anything or image edit prompt...", label_visibility="collapsed")
-st.markdown("</div>", unsafe_allow_html=True)
-
-# Function to edit image based on prompt
-def edit_image_with_prompt(image_file, user_prompt):
-    image = Image.open(image_file)
-
-    if "background hata" in user_prompt.lower():
-        image = remove(image)
-
-    if "gyani likh" in user_prompt.lower():
-        draw = ImageDraw.Draw(image)
-        font = ImageFont.load_default()
-        draw.text((10, 10), "Gyani", fill="white", font=font)
-
-    return image
-
-if user_q:
-    content_text = ""
-    full_prompt = f"{user_q}\n\n{f'📎 Attached content:\n{content_text}' if content_text else ''}"
-    st.session_state.history.append(("user", full_prompt))
-
-    # Handle image editing prompt
-    if image_file is not None:
+# Wikipedia Search
+elif menu == "🌐 Wikipedia Search":
+    search = st.text_input("Search Wikipedia:")
+    if search:
         try:
-            edited = edit_image_with_prompt(image_file, user_q)
-            st.image(edited, caption="🎨 Edited Image", use_column_width=True)
-        except Exception as e:
-            st.error(f"⚠️ Image editing failed: {e}")
+            import wikipedia
+            result = wikipedia.summary(search, sentences=3)
+            st.success(result)
+        except:
+            st.warning("⚠️ Result not found or language error.")
 
-    url = "https://api.groq.com/openai/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {groq_api_key}",
-        "Content-Type": "application/json"
-    }
+# Translator (Hindi <-> English)
+elif menu == "🌍 Translate (EN <-> HI)":
+    from langdetect import detect
+    from googletrans import Translator
+    msg = st.text_input("Enter text to translate:")
+    if msg:
+        try:
+            translator = Translator()
+            lang = detect(msg)
+            to_lang = "hi" if lang == "en" else "en"
+            translated = translator.translate(msg, dest=to_lang).text
+            st.success(f"Translated ({to_lang.upper()}): {translated}")
+        except:
+            st.error("Translation error")
 
-    messages = []
-    for speaker, msg in st.session_state.history[-5:]:
-        role = "user" if speaker == "user" else "assistant"
-        messages.append({"role": role, "content": msg})
-    messages.append({"role": "user", "content": full_prompt})
-
-    data = {
-        "model": "llama3-8b-8192",
-        "messages": messages
-    }
-
-    with st.spinner("🔄 Gyani soch raha hai..."):
-        res = requests.post(url, headers=headers, json=data)
-
-    if res.status_code == 200:
-        reply = res.json()["choices"][0]["message"]["content"]
-        st.session_state.history.append(("gyani", reply))
-        st.markdown(f"<div style='padding: 12px; background-color: #1f1f1f; border-radius: 12px; margin: 10px auto; max-width: 720px;'><b>🧠 Gyani:</b> {reply}</div>", unsafe_allow_html=True)
-    else:
-        st.error(f"❌ Error: {res.status_code} - {res.text}")
-
-    # Clear input safely
-    if "user_q" in st.session_state:
-        st.session_state["user_q"] = ""
-
-# Show chat history cleanly
-for speaker, msg in st.session_state.history:
-    role = "👤 User" if speaker == "user" else "🧠 Gyani"
-    bubble_color = "#2a2a2a" if speaker == "user" else "#1f1f1f"
-    st.markdown(f"<div style='padding: 12px; background-color: {bubble_color}; border-radius: 12px; margin: 8px auto; max-width: 720px;'><b>{role}:</b> {msg}</div>", unsafe_allow_html=True)
-
-# Footer
-st.markdown("""
-    <hr>
-    <div style='text-align: center; color: gray; font-size: 14px;'>
-        🤖 <strong>Gyani</strong> banaya gaya hai <strong>Pradeep Vaishnav</strong> dwara.<br>
-        Jai Jagannath 🙏
-    </div>
-""", unsafe_allow_html=True)
-
+# Placeholder for other features (skeleton)
+else:
+    st.info(f"{menu} feature is under development in Gyani v2.")
