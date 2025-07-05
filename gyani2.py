@@ -19,6 +19,11 @@ groq_api_key = "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"
 if "history" not in st.session_state:
     st.session_state.history = []
 
+# Prompt Input Box (move it above file uploader)
+with st.form(key="chat_form", clear_on_submit=True):
+    user_input = st.text_input("💬 Gyani se poochho:", placeholder="(e.g., Remove background / Cartoonify / Add forest background)", key="input_box")
+    submit = st.form_submit_button("💬 Send")
+
 # File upload (image or PDF)
 st.markdown("## 📄 Upload PDF ya Image")
 uploaded_file = st.file_uploader("Upload PDF or Image (optional)", type=["pdf", "png", "jpg", "jpeg"])
@@ -38,11 +43,6 @@ if uploaded_file:
         image_uploaded = True
         st.image(uploaded_file, caption="🖼️ Uploaded Image", use_column_width=True)
 
-# Prompt Input Box
-with st.form(key="chat_form", clear_on_submit=True):
-    user_input = st.text_input("💬 Gyani se poochho:", placeholder="(e.g., Remove background / Cartoonify / Add forest background)", key="input_box")
-    submit = st.form_submit_button("💬 Send")
-
 if submit and user_input:
     query = user_input.lower()
     st.session_state.history.append(("user", query))
@@ -59,7 +59,6 @@ if submit and user_input:
                 edited_image = image.filter(ImageFilter.CONTOUR).filter(ImageFilter.SMOOTH_MORE)
                 st.success("🎨 Cartoon/Ghibli style applied.")
             elif "add background" in query or "add forest" in query:
-                # Placeholder: just enhance original for demo
                 enhancer = ImageEnhance.Color(image)
                 edited_image = enhancer.enhance(1.5)
                 st.success("🌳 Background added (simulated).")
