@@ -16,6 +16,11 @@ groq_api_key = "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"
 if "history" not in st.session_state:
     st.session_state.history = []
 
+# Smart Input in a form (Enter to submit)
+with st.form(key="chat_form", clear_on_submit=True):
+    user_input = st.text_input("💬 Gyani se poochho:", placeholder="Type your query (e.g., 'Summarize the PDF', 'Find the key points', etc.)", key="input_box")
+    submit = st.form_submit_button("💬 Send")
+
 # File upload (optional for summarizer)
 uploaded_file = st.file_uploader("📂 Upload a PDF (optional)", type=["pdf"])
 extracted_text = ""
@@ -29,11 +34,6 @@ if uploaded_file:
         st.code(extracted_text[:1000] + ("..." if len(extracted_text) > 1000 else ""))
     else:
         st.warning("⚠️ PDF se koi text extract nahi ho paya. Shayad ye image-only scan ho.")
-
-# Smart Input in a form (Enter to submit)
-with st.form(key="chat_form", clear_on_submit=True):
-    user_input = st.text_input("💬 Gyani se poochho:", placeholder="Type your query (e.g., 'Summarize the PDF', 'Find the key points', etc.)", key="input_box")
-    submit = st.form_submit_button("💬 Send")
 
 if submit and user_input:
     query = user_input.lower()
