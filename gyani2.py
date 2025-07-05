@@ -32,15 +32,15 @@ if uploaded_file:
 
 # Smart Input in a form (Enter to submit)
 with st.form(key="chat_form", clear_on_submit=True):
-    user_input = st.text_input("💬 Gyani se poochho:", placeholder="Type your query...", key="input_box")
+    user_input = st.text_input("💬 Gyani se poochho:", placeholder="Type your query (e.g., 'Summarize the PDF', 'Find the key points', etc.)", key="input_box")
     submit = st.form_submit_button("💬 Send")
 
 if submit and user_input:
     query = user_input.lower()
     st.session_state.history.append(("user", query))
 
-    # Full prompt with file context if available
-    full_prompt = f"{query}\n\nIf needed, here is context from uploaded file:\n'''{extracted_text}'''" if extracted_text else query
+    # Full prompt with user query + file content if uploaded
+    full_prompt = f"User query: {query}\n\nIf helpful, use this uploaded PDF content:\n'''{extracted_text}'''" if extracted_text else query
 
     # Chat messages format
     messages = [
