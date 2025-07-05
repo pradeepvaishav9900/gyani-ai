@@ -4,7 +4,6 @@ import PyPDF2
 import io
 import wikipedia
 from langdetect import detect
-from googletrans import Translator
 
 st.set_page_config(page_title="Gyani v2 - Smart AI Assistant", page_icon="🧠")
 st.title("🧠 Gyani v2 - Smart + Auto-Detect Mode")
@@ -32,20 +31,13 @@ if user_input:
     try:
         # Auto-detect modes
         if query.startswith("/help") or query.startswith("/about"):
-            st.info("🧠 Gyani v2 - Smart Assistant. Features: Chat, Wiki, Translate, PDF Reader, Math.")
+            st.info("🧠 Gyani v2 - Smart Assistant. Features: Chat, Wiki, PDF Reader, Math.")
 
         elif any(word in query for word in ["who is", "history", "कौन", "था"]):
             lang = detect(user_input)
             wikipedia.set_lang(lang if lang in ["en", "hi"] else "en")
             result = wikipedia.summary(user_input, sentences=3)
             st.success(f"🌐 Wikipedia Result:\n{result}")
-
-        elif any(x in query for x in ["translate", "अनुवाद"]):
-            translator = Translator()
-            lang = detect(user_input)
-            to_lang = "hi" if lang == "en" else "en"
-            translated = translator.translate(user_input, dest=to_lang).text
-            st.success(f"🌍 Translated ({to_lang.upper()}): {translated}")
 
         elif any(sym in query for sym in ["+", "-", "*", "/", "=", "solve"]):
             try:
