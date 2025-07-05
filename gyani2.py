@@ -31,7 +31,7 @@ with st.form("ask_gyani"):
 
 if submitted and user_input:
     query = user_input.lower()
-        st.session_state[text_input_key] = ""  # Safe input clear
+    st.session_state[text_input_key] = ""  # Safe input clear
 
     try:
         # Auto-detect modes
