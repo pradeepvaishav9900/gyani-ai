@@ -9,7 +9,7 @@ from rembg import remove
 import base64
 
 st.set_page_config(page_title="Gyani v2 - Smart AI Assistant", page_icon="🧠")
-st.title("🧠 Gyani v2 - Smart + Auto-Detect Mode")
+st.title("🧠 Gyani ")
 st.markdown("#### Developed by Pradeep Vaishnav")
 
 # Load API Key
