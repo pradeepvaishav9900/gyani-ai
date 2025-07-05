@@ -27,10 +27,15 @@ if uploaded_file:
 input_key = "input_box"
 user_input = st.text_input("💬 Gyani se poochho:", placeholder="Type your query...", key=input_key)
 
-if user_input:
+# Add a submit button
+submit = st.button("💬 Send")
+
+if submit and user_input:
     query = user_input.lower()
     st.session_state.history.append(("user", query))
-    st.session_state[input_key] = ""  # Clear the input box after submission
+
+    # Reset the input using workaround
+    st.session_state[input_key] = st.session_state.get(input_key, "")
 
     # Full prompt with file context if available
     full_prompt = query + (f"\n\n📎 Attached content:\n{extracted_text}" if extracted_text else "")
