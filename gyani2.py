@@ -23,19 +23,14 @@ if uploaded_file:
     reader = PyPDF2.PdfReader(uploaded_file)
     extracted_text = "".join(page.extract_text() or "" for page in reader.pages)
 
-# Smart Input (Enter-to-submit enabled and clear input)
-input_key = "input_box"
-user_input = st.text_input("💬 Gyani se poochho:", placeholder="Type your query...", key=input_key)
-
-# Add a submit button
-submit = st.button("💬 Send")
+# Smart Input in a form (Enter to submit)
+with st.form(key="chat_form", clear_on_submit=True):
+    user_input = st.text_input("💬 Gyani se poochho:", placeholder="Type your query...", key="input_box")
+    submit = st.form_submit_button("💬 Send")
 
 if submit and user_input:
     query = user_input.lower()
     st.session_state.history.append(("user", query))
-
-    # Reset the input using workaround
-    st.session_state[input_key] = st.session_state.get(input_key, "")
 
     # Full prompt with file context if available
     full_prompt = query + (f"\n\n📎 Attached content:\n{extracted_text}" if extracted_text else "")
