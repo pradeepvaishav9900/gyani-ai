@@ -19,12 +19,14 @@ groq_api_key = "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"
 if "history" not in st.session_state:
     st.session_state.history = []
 
-# File upload (icon next to input box)
-col1, col2 = st.columns([8, 1])
+# Layout for chat input and file uploader side-by-side
+col1, col2 = st.columns([9, 1])
+
 with col1:
     with st.form(key="chat_form", clear_on_submit=True):
-        user_input = st.text_input("💬 Gyani se poochho:", placeholder="(e.g., Remove background / Cartoonify / Add forest background)", key="input_box")
-        submit = st.form_submit_button("💬 Send")
+        user_input = st.text_input("", placeholder="(e.g., Remove background / Cartoonify / Add forest background)", key="input_box")
+        submit = st.form_submit_button("💬")
+
 with col2:
     uploaded_file = st.file_uploader("", type=["pdf", "png", "jpg", "jpeg"], label_visibility="collapsed")
 
