@@ -19,14 +19,15 @@ groq_api_key = "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"
 if "history" not in st.session_state:
     st.session_state.history = []
 
-# Prompt Input Box (move it above file uploader)
-with st.form(key="chat_form", clear_on_submit=True):
-    user_input = st.text_input("💬 Gyani se poochho:", placeholder="(e.g., Remove background / Cartoonify / Add forest background)", key="input_box")
-    submit = st.form_submit_button("💬 Send")
+# File upload (icon next to input box)
+col1, col2 = st.columns([8, 1])
+with col1:
+    with st.form(key="chat_form", clear_on_submit=True):
+        user_input = st.text_input("💬 Gyani se poochho:", placeholder="(e.g., Remove background / Cartoonify / Add forest background)", key="input_box")
+        submit = st.form_submit_button("💬 Send")
+with col2:
+    uploaded_file = st.file_uploader("", type=["pdf", "png", "jpg", "jpeg"], label_visibility="collapsed")
 
-# File upload (image or PDF)
-st.markdown("## 📄 Upload PDF ya Image")
-uploaded_file = st.file_uploader("Upload PDF or Image (optional)", type=["pdf", "png", "jpg", "jpeg"])
 extracted_text = ""
 image_uploaded = False
 
@@ -70,7 +71,6 @@ if submit and user_input:
                 st.session_state.history.append(("gyani", "🖼️ Image edited as per your prompt."))
 
     else:
-        # Trim extracted text for context
         trimmed_text = extracted_text[:1500] + ("..." if len(extracted_text) > 1500 else "")
         full_prompt = f"Gyani ko query ka jawab do: '{query}'\n\nAgar PDF content madadgar ho to use bhi dekho:\n'''{trimmed_text}'''" if trimmed_text else query
 
