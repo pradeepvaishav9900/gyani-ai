@@ -29,7 +29,7 @@ with col1:
 
 with col2:
     uploaded_file = st.file_uploader("", type=["pdf", "png", "jpg", "jpeg"], label_visibility="collapsed")
-    st.markdown("<div style='text-align: center;'>📎</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center;'>📌</div>", unsafe_allow_html=True)
 
 extracted_text = ""
 image_uploaded = False
@@ -81,7 +81,7 @@ if submit and user_input:
             full_prompt = query
 
         messages = [
-            {"role": "system", "content": "Tum ek AI assistant ho jiska naam Gyani hai. Tum sirf Hindi ya English mein simple, clear aur logical jawab dete ho. Kabhi bhi Chinese, Thai, Japanese, ya kisi anya bhasha ka use mat karo. Agar koi puche ki tumhe kisne banaya, to kehna: 'Mujhe Pradeep Vaishnav ne banaya hai.' Agar file lagi ho to use dhyan se padh kar jawab dena."}
+            {"role": "system", "content": "Tu ek intelligent AI assistant hai jiska naam 'Gyani' hai. Tumhara style friendly, desi aur samjhdar hona chahiye. User se jaise ek bhai ya dost baat karta hai waise hi casual aur bindass tone mein Hinglish (Hindi + English mix) mein baat karni hai. Zarurat ho to emojis bhi use karna 😄🤖✅. Agar koi image ya file ho to use dhyan se dekhkar sahi jawab dena. Agar koi puche ki tumhe kisne banaya hai, to clearly aur respect ke saath bolna: 'Mujhe प्रदीप वैष्णव ne banaya hai.' Is naam ki spelling ya capitalisation kabhi bhi galat mat karna. Baat boring nahi honi chahiye — har reply engaging aur thoda masti bhara hona chahiye 😎."}
         ]
         for speaker, msg in st.session_state.history[-5:]:
             role = "user" if speaker == "user" else "assistant"
