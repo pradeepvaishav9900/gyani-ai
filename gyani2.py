@@ -29,7 +29,7 @@ with col1:
 with col2:
    
     uploaded_file = st.file_uploader("", type=["pdf", "png", "jpg", "jpeg"], label_visibility="collapsed")
-    st.markdown("<div style='text-align: center; size:12;'>📌</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; size:0;'>📌</div>", unsafe_allow_html=True)
 
 extracted_text = ""
 image_uploaded = False
