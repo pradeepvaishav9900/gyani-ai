@@ -24,7 +24,7 @@ col1, col2 = st.columns([9, 1])
 
 with col1:
     with st.form(key="chat_form", clear_on_submit=True):
-        user_input = st.text_input("", placeholder="(e.g., Remove background / Cartoonify / Add forest background)", key="input_box")
+        user_input = st.text_input("", placeholder="(apko kya janna hai)", key="input_box")
         submit = st.form_submit_button("💬")
 
 with col2:
