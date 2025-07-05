@@ -7,11 +7,11 @@ from langdetect import detect
 from PIL import Image, ImageEnhance, ImageFilter
 from rembg import remove
 import base64
-<center>
+
+with col2
 st.set_page_config(page_title="Gyani v2 - Smart AI Assistant", page_icon="🧠")
 st.title("🧠 Gyani ")
 st.markdown("#### Developed by Pradeep Vaishnav")
-</center>
 # Load API Key
 groq_api_key = "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"
 
