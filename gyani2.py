@@ -9,8 +9,9 @@ from rembg import remove
 import base64
 
 st.set_page_config(page_title="Gyani v2 - Smart AI Assistant", page_icon="🧠")
-st.title("♤♤   ♚Gyani   ♤♤  ")
-st.markdown("####  -----Developed by Pradeep Vaishnav")
+st.title("🧠 Gyani v2 - Smart + Auto-Detect Mode")
+st.markdown("#### Developed by Pradeep Vaishnav")
+
 # Load API Key
 groq_api_key = "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"
 
@@ -26,10 +27,9 @@ with col1:
         user_input = st.text_input("", placeholder="(apko kya janna hai)", key="input_box")
         submit = st.form_submit_button("💬")
 
-with col1:
-   
+with col2:
     uploaded_file = st.file_uploader("", type=["pdf", "png", "jpg", "jpeg"], label_visibility="collapsed")
-    st.markdown("<div style='text-align: center;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center;'>📌</div>", unsafe_allow_html=True)
 
 extracted_text = ""
 image_uploaded = False
