@@ -5,8 +5,14 @@ import io
 import wikipedia
 from langdetect import detect
 from PIL import Image, ImageEnhance, ImageFilter
-from rembg import remove
 import base64
+
+# Safe import for rembg
+try:
+    from rembg import remove
+except ImportError:
+    remove = None
+    st.warning("⚠️ rembg module couldn't be loaded. Background removal feature may not work (Python 3.13 issue).")
 
 st.set_page_config(page_title="Gyani v2 - Smart AI Assistant", page_icon="🧠")
 st.title("🧠 Gyani v2 - Smart + Auto-Detect Mode")
@@ -57,8 +63,11 @@ if submit and user_input:
             edited_image = None
 
             if "remove background" in query:
-                edited_image = remove(image)
-                st.success("🖼️ Background removed.")
+                if remove:
+                    edited_image = remove(image)
+                    st.success("🖼️ Background removed.")
+                else:
+                    st.error("❌ Background removal module not available. Python 3.13 compatibility issue.")
             elif "cartoon" in query or "gibli" in query:
                 edited_image = image.filter(ImageFilter.CONTOUR).filter(ImageFilter.SMOOTH_MORE)
                 st.success("🎨 Cartoon/Ghibli style applied.")
