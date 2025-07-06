@@ -1,4 +1,6 @@
 import streamlit as st
+st.set_page_config(page_title="Gyani v2 - Smart AI Assistant", page_icon="🧠")
+
 import requests
 import PyPDF2
 import io
@@ -8,13 +10,16 @@ from PIL import Image, ImageEnhance, ImageFilter
 import base64
 
 # Safe import for rembg
-try:
-    from rembg import remove
-except ImportError:
-    remove = None
-    st.warning("⚠️ rembg module couldn't be loaded. Background removal feature may not work (Python 3.13 issue).")
+def safe_rembg_import():
+    try:
+        from rembg import remove
+        return remove
+    except ImportError:
+        st.warning("⚠️ rembg module couldn't be loaded. Background removal feature may not work (Python 3.13 issue).")
+        return None
 
-st.set_page_config(page_title="Gyani v2 - Smart AI Assistant", page_icon="🧠")
+remove = safe_rembg_import()
+
 st.title("🧠 Gyani v2 - Smart + Auto-Detect Mode")
 st.markdown("#### Developed by Pradeep Vaishnav")
 
