@@ -15,7 +15,7 @@ def safe_rembg_import():
         from rembg import remove
         return remove
     except ImportError:
-        st.warning(").")
+        st.warning("jai jagannath 🙏")
         return None
 
 remove = safe_rembg_import()
