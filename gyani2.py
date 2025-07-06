@@ -125,3 +125,13 @@ for speaker, msg in st.session_state.history:
     st.markdown(f"<div style='padding: 12px; background-color: {bubble_color}; border-radius: 12px; margin: 8px auto; max-width: 720px;'><b>{role}:</b> {msg}</div>", unsafe_allow_html=True)
 
 st.markdown("<hr><div style='text-align: center; color: gray;'>🧠 Gyani banaya gaya hai <b>Pradeep Vaishnav</b> dwara 🙏</div>", unsafe_allow_html=True)
+
+# Requirements for deployment (requirements.txt):
+# streamlit
+# requests
+# PyPDF2
+# wikipedia
+# langdetect
+# Pillow
+# rembg
+# opencv-python-headless
