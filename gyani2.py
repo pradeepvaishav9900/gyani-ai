@@ -15,12 +15,12 @@ def safe_rembg_import():
         from rembg import remove
         return remove
     except ImportError:
-        st.warning("⚠️ rembg module couldn't be loaded. Background removal feature may not work (Python 3.13 issue).")
+        st.warning(").")
         return None
 
 remove = safe_rembg_import()
 
-st.title("🧠 Gyani v2 - Smart + Auto-Detect Mode")
+st.title("🧠 Gyani ")
 st.markdown("#### Developed by Pradeep Vaishnav")
 
 # Load API Key
