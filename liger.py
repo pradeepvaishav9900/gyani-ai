@@ -3,59 +3,73 @@ from PIL import Image, ImageDraw, ImageFont
 from streamlit_drawable_canvas import st_canvas
 import io
 
-st.set_page_config(page_title="Liger - Design Anything", page_icon="🦁")
-st.title("🦁🐯 Liger - Your Creative Canvas")
-st.markdown("Design with the power of **Lion + Tiger** 🖌️")
+# Page settings
+st.set_page_config(page_title="Liger - Design Anything", layout="wide", page_icon="🦁")
 
-# Canvas settings
-stroke_width = st.sidebar.slider("Stroke width:", 1, 25, 3)
-stroke_color = st.sidebar.color_picker("Stroke color", "#000000")
+# 🦁 Display logo and app title
+col1, col2 = st.columns([1, 8])
+with col1:
+    logo = Image.open("Liger Logo Design.png")
+    st.image(logo, width=80)
+with col2:
+    st.markdown("""
+        <h1 style='font-size:42px; margin-bottom:0;'>LIGER</h1>
+        <p style='margin-top:0; font-size:18px; color:gray;'>Design like a beast — The fusion of Lion & Tiger</p>
+    """, unsafe_allow_html=True)
 
-# Upload background image
-bg_image = st.sidebar.file_uploader("Upload Background Image", type=["png", "jpg", "jpeg"])
-if bg_image:
-    image = Image.open(bg_image)
-    image = image.convert("RGBA")
-    canvas_result = st_canvas(
-        fill_color="rgba(255, 255, 255, 0.0)",
-        stroke_width=stroke_width,
-        stroke_color=stroke_color,
-        background_image=image,
-        height=image.height,
-        width=image.width,
-        drawing_mode="freedraw",
-        key="canvas",
-    )
-else:
-    canvas_result = st_canvas(
-        fill_color="rgba(255, 255, 255, 0.0)",
-        stroke_width=stroke_width,
-        stroke_color=stroke_color,
-        background_color="#ffffff",
-        height=400,
-        width=600,
-        drawing_mode="freedraw",
-        key="canvas",
-    )
+st.markdown("---")
 
-# Add text
-st.subheader("📝 Add Text")
-text_input = st.text_input("Enter your text:", "My Liger Design")
-text_color = st.color_picker("Text Color", "#000000")
+# Layout like Canva: sidebar left, canvas + controls center/right
+left_col, center_col = st.columns([1, 4])
 
-if st.button("Add Text to Canvas"):
-    if canvas_result.image_data is not None:
-        img = Image.fromarray(canvas_result.image_data.astype("uint8"))
-        draw = ImageDraw.Draw(img)
-        font = ImageFont.load_default()
-        draw.text((50, 50), text_input, font=font, fill=text_color)
-        st.image(img)
+with left_col:
+    st.sidebar.header("🛠 Tools")
+    stroke_width = st.sidebar.slider("Stroke width:", 1, 25, 3)
+    stroke_color = st.sidebar.color_picker("Stroke color", "#000000")
+    bg_image = st.sidebar.file_uploader("Upload Background Image", type=["png", "jpg", "jpeg"])
 
-# Save image
-if st.button("💾 Save Your Design"):
-    if canvas_result.image_data is not None:
-        result_image = Image.fromarray(canvas_result.image_data.astype("uint8"))
-        buf = io.BytesIO()
-        result_image.save(buf, format="PNG")
-        byte_im = buf.getvalue()
-        st.download_button(label="📥 Download PNG", data=byte_im, file_name="liger_design.png", mime="image/png")
+with center_col:
+    st.subheader("🎨 Your Canvas")
+    if bg_image:
+        image = Image.open(bg_image).convert("RGBA")
+        canvas_result = st_canvas(
+            fill_color="rgba(255, 255, 255, 0.0)",
+            stroke_width=stroke_width,
+            stroke_color=stroke_color,
+            background_image=image,
+            height=image.height,
+            width=image.width,
+            drawing_mode="freedraw",
+            key="canvas",
+        )
+    else:
+        canvas_result = st_canvas(
+            fill_color="rgba(255, 255, 255, 0.0)",
+            stroke_width=stroke_width,
+            stroke_color=stroke_color,
+            background_color="#ffffff",
+            height=500,
+            width=800,
+            drawing_mode="freedraw",
+            key="canvas",
+        )
+
+    st.subheader("📝 Add Text")
+    text_input = st.text_input("Enter your text:", "My Liger Design")
+    text_color = st.color_picker("Text Color", "#000000")
+
+    if st.button("Add Text to Canvas"):
+        if canvas_result.image_data is not None:
+            img = Image.fromarray(canvas_result.image_data.astype("uint8"))
+            draw = ImageDraw.Draw(img)
+            font = ImageFont.load_default()
+            draw.text((50, 50), text_input, font=font, fill=text_color)
+            st.image(img)
+
+    if st.button("💾 Save Your Design"):
+        if canvas_result.image_data is not None:
+            result_image = Image.fromarray(canvas_result.image_data.astype("uint8"))
+            buf = io.BytesIO()
+            result_image.save(buf, format="PNG")
+            byte_im = buf.getvalue()
+            st.download_button(label="📥 Download PNG", data=byte_im, file_name="liger_design.png", mime="image/png")
