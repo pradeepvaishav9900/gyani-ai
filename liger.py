@@ -1,5 +1,5 @@
 import streamlit as st
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageEnhance, ImageFilter
 from streamlit_drawable_canvas import st_canvas
 import io
 
@@ -73,7 +73,15 @@ elif page == "🎨 Design Canvas":
     text_color = st.sidebar.color_picker("Text Color", "#000000")
     text_pos_x = st.sidebar.slider("Text X Position", 0, 800, 50)
     text_pos_y = st.sidebar.slider("Text Y Position", 0, 500, 50)
+    font_size = st.sidebar.slider("Font Size", 10, 100, 20)
     bg_image = st.sidebar.file_uploader("Upload Background Image", type=["png", "jpg", "jpeg"])
+
+    # Filters
+    st.sidebar.markdown("## 🎚 Photo Filters")
+    brightness = st.sidebar.slider("Brightness", 0.5, 2.0, 1.0)
+    contrast = st.sidebar.slider("Contrast", 0.5, 2.0, 1.0)
+    sharpness = st.sidebar.slider("Sharpness", 0.5, 2.0, 1.0)
+    blur_radius = st.sidebar.slider("Blur Radius", 0.0, 10.0, 0.0)
 
     # Main Canvas Area
     st.subheader("🎨 Design Canvas")
@@ -91,6 +99,11 @@ elif page == "🎨 Design Canvas":
 
     if bg_image:
         image = Image.open(bg_image).convert("RGBA")
+        image = ImageEnhance.Brightness(image).enhance(brightness)
+        image = ImageEnhance.Contrast(image).enhance(contrast)
+        image = ImageEnhance.Sharpness(image).enhance(sharpness)
+        if blur_radius > 0:
+            image = image.filter(ImageFilter.GaussianBlur(blur_radius))
         canvas_kwargs["background_image"] = image
         canvas_kwargs["height"] = image.height
         canvas_kwargs["width"] = image.width
@@ -102,7 +115,10 @@ elif page == "🎨 Design Canvas":
         if canvas_result.image_data is not None:
             img = Image.fromarray(canvas_result.image_data.astype("uint8"))
             draw = ImageDraw.Draw(img)
-            font = ImageFont.load_default()
+            try:
+                font = ImageFont.truetype("arial.ttf", font_size)
+            except:
+                font = ImageFont.load_default()
             draw.text((text_pos_x, text_pos_y), text_input, font=font, fill=text_color)
             st.image(img)
 
