@@ -9,8 +9,12 @@ st.set_page_config(page_title="Liger - Design Anything", layout="wide", page_ico
 # 🦁 Display logo and app title
 col1, col2 = st.columns([1, 8])
 with col1:
-    logo = Image.open("Liger Logo Design.png")
-    st.image(logo, width=80)
+    try:
+        logo = Image.open("Liger Logo Design.png")
+        st.image(logo, width=80)
+    except FileNotFoundError:
+        st.warning("⚠️ Logo not found. Please upload 'Liger Logo Design.png' in the app folder.")
+
 with col2:
     st.markdown("""
         <h1 style='font-size:42px; margin-bottom:0;'>LIGER</h1>
