@@ -6,74 +6,86 @@ import io
 # Page settings
 st.set_page_config(page_title="Liger - Design Anything", layout="wide", page_icon="🦁")
 
-# 🦁 Display logo and app title
-col1, col2 = st.columns([1, 8])
-with col1:
-    try:
-        logo = Image.open("Liger Logo Design.png")
-        st.image(logo, width=80)
-    except FileNotFoundError:
-        st.warning("⚠️ Logo not found. Please upload 'Liger Logo Design.png' in the app folder.")
+# Sidebar Navigation
+st.sidebar.title("LIGER")
+page = st.sidebar.radio("Go to", ["🏠 Home", "🎨 Design Canvas"])
 
-with col2:
-    st.markdown("""
-        <h1 style='font-size:42px; margin-bottom:0;'>LIGER</h1>
-        <p style='margin-top:0; font-size:18px; color:gray;'>Design like a beast — The fusion of Lion & Tiger</p>
-    """, unsafe_allow_html=True)
+# 🦁 Display logo and app title
+with st.container():
+    col1, col2 = st.columns([1, 8])
+    with col1:
+        try:
+            logo = Image.open("Liger Logo Design.png")
+            st.image(logo, width=80)
+        except FileNotFoundError:
+            st.warning("⚠️ Logo not found. Please upload 'Liger Logo Design.png' in the app folder.")
+
+    with col2:
+        st.markdown("""
+            <h1 style='font-size:42px; margin-bottom:0;'>LIGER</h1>
+            <p style='margin-top:0; font-size:18px; color:gray;'>Design like a beast — The fusion of Lion & Tiger</p>
+        """, unsafe_allow_html=True)
 
 st.markdown("---")
 
-# Layout like Canva: sidebar left, canvas + controls center/right
-left_col, center_col = st.columns([1, 4])
+# Home Page
+if page == "🏠 Home":
+    st.markdown("""
+    <div style='text-align: center;'>
+        <h2>Welcome to LIGER</h2>
+        <p style='font-size:18px;'>Liger is a free, web-based design tool just like Canva — made for everyone who loves to create.</p>
+        <img src='https://cdn-icons-png.flaticon.com/512/2921/2921222.png' width='150'>
+        <p style='margin-top:20px;'>Click on <strong>🎨 Design Canvas</strong> in the sidebar to start creating now!</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-with left_col:
-    st.sidebar.header("🛠 Tools")
-    drawing_mode = st.sidebar.selectbox(
-        "Drawing tool:", ("freedraw", "line", "rect", "circle", "transform")
-    )
-    stroke_width = st.sidebar.slider("Stroke width:", 1, 25, 3)
+# Design Page
+elif page == "🎨 Design Canvas":
+    # Sidebar Tools
+    st.sidebar.markdown("## 🛠 Toolbar")
+    drawing_mode = st.sidebar.selectbox("Tool", ("freedraw", "line", "rect", "circle", "transform"))
+    stroke_width = st.sidebar.slider("Stroke width", 1, 25, 3)
     stroke_color = st.sidebar.color_picker("Stroke color", "#000000")
+    fill_color = st.sidebar.color_picker("Fill color (for shapes)", "#ffffff")
+    text_input = st.sidebar.text_input("Text to Add", "My Liger Design")
+    text_color = st.sidebar.color_picker("Text Color", "#000000")
+    text_pos_x = st.sidebar.slider("Text X Position", 0, 800, 50)
+    text_pos_y = st.sidebar.slider("Text Y Position", 0, 500, 50)
     bg_image = st.sidebar.file_uploader("Upload Background Image", type=["png", "jpg", "jpeg"])
 
-with center_col:
-    st.subheader("🎨 Your Canvas")
+    # Main Canvas Area
+    st.subheader("🎨 Design Canvas")
     canvas_kwargs = {
-        "fill_color": "rgba(255, 255, 255, 0.0)",
+        "fill_color": fill_color + "80",  # semi-transparent fill
         "stroke_width": stroke_width,
         "stroke_color": stroke_color,
         "drawing_mode": drawing_mode,
-        "key": "canvas"
+        "key": "canvas",
+        "update_streamlit": True,
+        "background_color": "#ffffff",
+        "height": 500,
+        "width": 800,
     }
 
     if bg_image:
         image = Image.open(bg_image).convert("RGBA")
-        canvas_kwargs.update({
-            "background_image": image,
-            "height": image.height,
-            "width": image.width,
-        })
-    else:
-        canvas_kwargs.update({
-            "background_color": "#ffffff",
-            "height": 500,
-            "width": 800,
-        })
+        canvas_kwargs["background_image"] = image
+        canvas_kwargs["height"] = image.height
+        canvas_kwargs["width"] = image.width
 
     canvas_result = st_canvas(**canvas_kwargs)
 
-    st.subheader("📝 Add Text")
-    text_input = st.text_input("Enter your text:", "My Liger Design")
-    text_color = st.color_picker("Text Color", "#000000")
-
-    if st.button("Add Text to Canvas"):
+    # Add text to image
+    if st.sidebar.button("Add Text to Canvas"):
         if canvas_result.image_data is not None:
             img = Image.fromarray(canvas_result.image_data.astype("uint8"))
             draw = ImageDraw.Draw(img)
             font = ImageFont.load_default()
-            draw.text((50, 50), text_input, font=font, fill=text_color)
+            draw.text((text_pos_x, text_pos_y), text_input, font=font, fill=text_color)
             st.image(img)
 
-    if st.button("💾 Save Your Design"):
+    # Save functionality
+    if st.sidebar.button("💾 Save Design"):
         if canvas_result.image_data is not None:
             result_image = Image.fromarray(canvas_result.image_data.astype("uint8"))
             buf = io.BytesIO()
