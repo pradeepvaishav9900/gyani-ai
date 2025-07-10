@@ -31,12 +31,34 @@ st.markdown("---")
 # Home Page
 if page == "🏠 Home":
     st.markdown("""
-    <div style='text-align: center;'>
-        <h2>Welcome to LIGER</h2>
-        <p style='font-size:18px;'>Liger is a free, web-based design tool just like Canva — made for everyone who loves to create.</p>
-        <img src='https://cdn-icons-png.flaticon.com/512/2921/2921222.png' width='150'>
-        <p style='margin-top:20px;'>Click on <strong>🎨 Design Canvas</strong> in the sidebar to start creating now!</p>
-    </div>
+        <div style='text-align: center; padding-top: 30px;'>
+            <h1 style='font-size:48px;'>Where ideas meet <span style='color:#7b68ee;'>creativity</span>.</h1>
+            <p style='font-size:20px; color:gray;'>Liger helps you design and share stunning graphics in seconds — for free.</p>
+            <a href='/?page=🎨+Design+Canvas'><button style='background-color:#7b68ee;color:white;border:none;padding:10px 25px;font-size:16px;border-radius:6px;margin-top:20px;'>Start designing</button></a>
+        </div>
+        <br><br>
+        <div style='display: flex; justify-content: center; flex-wrap: wrap; gap: 30px;'>
+            <div style='text-align:center;'>
+                <img src='https://img.icons8.com/color/96/000000/presentation.png'/>
+                <h4>Presentations</h4>
+            </div>
+            <div style='text-align:center;'>
+                <img src='https://img.icons8.com/color/96/000000/instagram-new--v1.png'/>
+                <h4>Social</h4>
+            </div>
+            <div style='text-align:center;'>
+                <img src='https://img.icons8.com/color/96/000000/youtube-play.png'/>
+                <h4>Videos</h4>
+            </div>
+            <div style='text-align:center;'>
+                <img src='https://img.icons8.com/color/96/000000/print.png'/>
+                <h4>Prints</h4>
+            </div>
+            <div style='text-align:center;'>
+                <img src='https://img.icons8.com/color/96/000000/idea.png'/>
+                <h4>Whiteboards</h4>
+            </div>
+        </div>
     """, unsafe_allow_html=True)
 
 # Design Page
