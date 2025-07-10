@@ -24,35 +24,38 @@ left_col, center_col = st.columns([1, 4])
 
 with left_col:
     st.sidebar.header("🛠 Tools")
+    drawing_mode = st.sidebar.selectbox(
+        "Drawing tool:", ("freedraw", "line", "rect", "circle", "transform")
+    )
     stroke_width = st.sidebar.slider("Stroke width:", 1, 25, 3)
     stroke_color = st.sidebar.color_picker("Stroke color", "#000000")
     bg_image = st.sidebar.file_uploader("Upload Background Image", type=["png", "jpg", "jpeg"])
 
 with center_col:
     st.subheader("🎨 Your Canvas")
+    canvas_kwargs = {
+        "fill_color": "rgba(255, 255, 255, 0.0)",
+        "stroke_width": stroke_width,
+        "stroke_color": stroke_color,
+        "drawing_mode": drawing_mode,
+        "key": "canvas"
+    }
+
     if bg_image:
         image = Image.open(bg_image).convert("RGBA")
-        canvas_result = st_canvas(
-            fill_color="rgba(255, 255, 255, 0.0)",
-            stroke_width=stroke_width,
-            stroke_color=stroke_color,
-            background_image=image,
-            height=image.height,
-            width=image.width,
-            drawing_mode="freedraw",
-            key="canvas",
-        )
+        canvas_kwargs.update({
+            "background_image": image,
+            "height": image.height,
+            "width": image.width,
+        })
     else:
-        canvas_result = st_canvas(
-            fill_color="rgba(255, 255, 255, 0.0)",
-            stroke_width=stroke_width,
-            stroke_color=stroke_color,
-            background_color="#ffffff",
-            height=500,
-            width=800,
-            drawing_mode="freedraw",
-            key="canvas",
-        )
+        canvas_kwargs.update({
+            "background_color": "#ffffff",
+            "height": 500,
+            "width": 800,
+        })
+
+    canvas_result = st_canvas(**canvas_kwargs)
 
     st.subheader("📝 Add Text")
     text_input = st.text_input("Enter your text:", "My Liger Design")
