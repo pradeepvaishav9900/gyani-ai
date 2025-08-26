@@ -20,5 +20,11 @@ googletrans==4.0.0-rc1
 streamlit-drawable-canvas
 requests
 streamlit-authenticator
+streamlit
+pytesseract
+Pillow
+requests
+streamlit-authenticator
+
 
 
