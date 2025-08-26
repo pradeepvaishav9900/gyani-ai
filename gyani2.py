@@ -24,7 +24,7 @@ st.title("🧠 Gyani ")
 st.markdown("#### Developed by Pradeep Vaishnav")
 
 # Load API Key
-groq_api_key = "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"
+groq_api_key = "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"
 
 # Initialize history
 if "history" not in st.session_state:
