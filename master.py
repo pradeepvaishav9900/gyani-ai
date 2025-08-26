@@ -1,129 +1,108 @@
-import streamlit as st
+import os
+import io
+import json
+import time
+import math
+from typing import List
 from PIL import Image
 import pytesseract
 import requests
-import json
-import math
-import time
+import streamlit as st
+from PyPDF2 import PdfReader
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
 
-st.set_page_config(page_title="Board-style Answer Checker", page_icon="📘", layout="wide")
-st.title("📘 Board-Style Answer Checker — MCQ + Subjective (Groq LLM + OCR)")
+# ----------------------------
+# App config (no sidebar)
+# ----------------------------
+st.set_page_config(page_title="Board-style Checker (No Sidebar)", page_icon="📘", layout="wide")
+st.title("📘 Board-style Answer Checker — Upload Questions & Get Marks")
+st.markdown("**How to use:** Upload questions (PDF/TXT) or type questions, then select a question, provide student's answer (type or upload image), and click **Grade**. Use Streamlit Secrets (`GROQ_API_KEY`) in production.")
 
-# ------------------------
-# Sidebar: API key & options
-# ------------------------
-st.sidebar.header("Settings & API")
-api_key_input = st.sidebar.text_input("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", type="password")
-MODEL_CHOICES = ["llama-3-70b-8192", "mixtral-8x7b", "llama3-8b-8192"]
-model = st.sidebar.selectbox("Choose Groq Model", MODEL_CHOICES)
-temperature = st.sidebar.slider("Temperature (LLM creativity)", 0.0, 1.0, 0.2)
-max_tokens = st.sidebar.number_input("Max tokens (response)", min_value=200, max_value=4000, value=800, step=100)
-
-# Prefer secrets over typed key
+# ----------------------------
+# Groq API key (secure)
+# ----------------------------
 def get_groq_key():
-    if "GROQ_API_KEY" in st.secrets:
-        return st.secrets["GROQ_API_KEY"]
-    return api_key_input.strip()
+    # prefer Streamlit secrets -> environment -> runtime input
+    key = None
+    try:
+        key = st.secrets["GROQ_API_KEY"]
+    except Exception:
+        key = os.environ.get("GROQ_API_KEY")
+    if not key:
+        # show small input at top of page (not sidebar) for quick local runs
+        key = st.text_input("Groq API Key (or set GROQ_API_KEY in Streamlit Secrets / env)", type="password")
+    return key.strip() if key else ""
 
 GROQ_API_KEY = get_groq_key()
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+DEFAULT_MODEL = "llama-3-70b-8192"
 
-if not GROQ_API_KEY:
-    st.sidebar.warning("Please provide your Groq API key in sidebar or in Streamlit secrets (GROQ_API_KEY).")
+# ----------------------------
+# Helpers: PDF/text extraction
+# ----------------------------
+def extract_text_from_pdf(uploaded_file) -> str:
+    try:
+        reader = PdfReader(uploaded_file)
+        text = []
+        for page in reader.pages:
+            txt = page.extract_text()
+            if txt:
+                text.append(txt)
+        return "\n\n".join(text)
+    except Exception as e:
+        st.error(f"PDF parsing error: {e}")
+        return ""
 
-# ------------------------
-# Example question bank (you can expand)
-# ------------------------
-st.sidebar.header("Example Question Bank")
-default_bank = {
-    "Long - Newton II (5 marks)": {
-        "type": "subjective",
-        "text": "Explain Newton's Second Law of Motion with an example.",
-        "max_marks": 5,
-        "model_answer": "Newton's Second Law states that net force equals mass times acceleration (F = ma). Example: pushing a box causes acceleration proportional to applied force."
-    },
-    "Short - Photosynthesis (4 marks)": {
-        "type": "subjective",
-        "text": "What is photosynthesis? Write its balanced equation.",
-        "max_marks": 4,
-        "model_answer": "Photosynthesis: process by which green plants synthesize food using sunlight, CO2 and water. Equation: 6CO2 + 6H2O -> C6H12O6 + 6O2"
-    },
-    "MCQ - Earth's axis tilt": {
-        "type": "mcq",
-        "text": "The tilt of Earth's axis is approximately:",
-        "options": ["23.5°", "0°", "45°", "90°"],
-        "correct": "23.5°",
-        "max_marks": 1,
-        "negative_mark": 0.0
-    }
-}
+def load_questions_from_txt_or_pdf(uploaded_files) -> List[str]:
+    questions = []
+    for f in uploaded_files:
+        name = f.name.lower()
+        if name.endswith(".pdf"):
+            txt = extract_text_from_pdf(f)
+        else:
+            raw = f.read()
+            if isinstance(raw, bytes):
+                try:
+                    txt = raw.decode("utf-8")
+                except:
+                    txt = raw.decode("latin-1", errors="ignore")
+            else:
+                txt = str(raw)
+        # split heuristically into questions by blank lines or lines starting with Q.
+        blocks = [b.strip() for b in txt.split("\n\n") if b.strip()]
+        # further split long blocks by "Q." or "Q" lines if present
+        refined = []
+        for b in blocks:
+            # try common separators
+            if "\nQ" in b:
+                parts = [p.strip() for p in b.split("\nQ") if p.strip()]
+                refined.extend(parts)
+            else:
+                refined.append(b)
+        questions.extend(refined)
+    return questions
 
-use_bank = st.sidebar.checkbox("Use built-in example bank", value=True)
-if use_bank:
-    selected_key = st.sidebar.selectbox("Pick a sample question (sidebar)", list(default_bank.keys()))
-    sample = default_bank[selected_key]
-else:
-    sample = None
+# ----------------------------
+# OCR helper (images)
+# ----------------------------
+def ocr_image_to_text(uploaded_image) -> str:
+    try:
+        img = Image.open(uploaded_image).convert("RGB")
+        # basic OCR; if Hindi needed, user must have Hindi tesseract traineddata on host
+        text = pytesseract.image_to_string(img)
+        return text
+    except Exception as e:
+        st.error(f"OCR error: {e}")
+        return ""
 
-# ------------------------
-# Main UI: choose/create question
-# ------------------------
-st.subheader("1) Question (Choose sample or enter your own)")
-
-q_type = st.selectbox("Question type", ["subjective", "mcq"]) if not sample else sample["type"]
-if sample:
-    question_text = st.text_area("Question text", value=sample["text"], height=100)
-else:
-    question_text = st.text_area("Question text", height=100)
-
-if q_type == "mcq":
-    st.write("MCQ settings")
-    if sample and "options" in sample:
-        options = sample["options"]
-    else:
-        raw_opts = st.text_area("Enter options (one per line)", value="Option A\nOption B\nOption C\nOption D", height=100)
-        options = [o.strip() for o in raw_opts.splitlines() if o.strip()]
-    if sample and "correct" in sample:
-        correct_option = sample["correct"]
-    else:
-        correct_option = st.selectbox("Select correct option (for teacher reference)", options)
-    max_marks = st.number_input("Max marks for MCQ", min_value=0.0, value=float(sample.get("max_marks", 1.0) if sample else 1.0))
-    negative_mark = st.number_input("Negative marking (per wrong)", min_value=0.0, value=float(sample.get("negative_mark", 0.0) if sample else 0.0))
-else:
-    st.write("Subjective settings")
-    max_marks = st.number_input("Max marks for subjective question", min_value=1.0, value=float(sample.get("max_marks", 5.0) if sample else 5.0))
-    model_answer = st.text_area("Model answer / key points (give bullet points or full answer)", value=(sample.get("model_answer","") if sample else ""), height=150)
-
-# ------------------------
-# Student answer input (text or image OCR)
-# ------------------------
-st.subheader("2) Student Answer (type or upload image)")
-input_mode = st.radio("Answer input mode", ["Type Answer", "Upload Image (handwritten/photo)"])
-
-student_answer_text = ""
-if input_mode == "Type Answer":
-    student_answer_text = st.text_area("Student answer text", height=200)
-else:
-    uploaded_img = st.file_uploader("Upload image (jpg/png). OCR will be used.", type=["jpg","jpeg","png"])
-    if uploaded_img:
-        try:
-            img = Image.open(uploaded_img)
-            st.image(img, caption="Uploaded answer (preview)", use_column_width=True)
-            with st.spinner("Running OCR (pytesseract)..."):
-                # pytesseract configuration can be adjusted e.g., lang="eng+hin"
-                student_answer_text = pytesseract.image_to_string(img)
-                time.sleep(0.5)
-            st.text_area("OCR extracted text (editable)", value=student_answer_text, height=200)
-        except Exception as e:
-            st.error(f"OCR error: {e}")
-
-# ------------------------
-# Helper: call Groq
-# ------------------------
-def call_groq(model, messages, temperature=0.2, max_tokens=800):
-    key = GROQ_API_KEY
+# ----------------------------
+# Groq call helper
+# ----------------------------
+def call_groq(model: str, messages: List[dict], temperature: float = 0.2, max_tokens: int = 800, api_key: str = ""):
+    key = api_key or GROQ_API_KEY
     if not key:
-        return {"error": "No Groq API key provided."}
+        return {"error": "No Groq API key provided. Set GROQ_API_KEY in secrets or env, or paste it above."}
     payload = {
         "model": model,
         "messages": messages,
@@ -139,125 +118,246 @@ def call_groq(model, messages, temperature=0.2, max_tokens=800):
     except Exception as e:
         return {"error": str(e)}
 
-# ------------------------
-# Grading logic
-# ------------------------
-st.subheader("3) Grade (Run)")
-if st.button("Grade Answer"):
-    if not question_text.strip():
-        st.warning("Please enter the question text.")
-    elif (not student_answer_text or not student_answer_text.strip()):
-        st.warning("Please provide the student's answer (text or image).")
+# ----------------------------
+# PDF report generation
+# ----------------------------
+def generate_pdf_report(question, student_answer, grading_json) -> bytes:
+    buf = io.BytesIO()
+    c = canvas.Canvas(buf, pagesize=A4)
+    width, height = A4
+    margin = 40
+    y = height - margin
+
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(margin, y, "Board-style Grading Report")
+    y -= 30
+
+    c.setFont("Helvetica", 11)
+    c.drawString(margin, y, f"Question:")
+    y -= 18
+    for line in question.splitlines():
+        c.drawString(margin + 10, y, line[:100])
+        y -= 14
+        if y < 100:
+            c.showPage(); y = height - margin
+    y -= 6
+
+    c.drawString(margin, y, "Student Answer:")
+    y -= 18
+    for line in student_answer.splitlines():
+        c.drawString(margin + 10, y, line[:100])
+        y -= 14
+        if y < 100:
+            c.showPage(); y = height - margin
+
+    y -= 6
+    c.drawString(margin, y, "Grading Result:")
+    y -= 18
+
+    # pretty-print grading JSON
+    try:
+        scores = grading_json.get("scores", {})
+        total = grading_json.get("total_score", "")
+        c.drawString(margin + 10, y, f"Total Score: {total}")
+        y -= 18
+        c.drawString(margin + 10, y, "Breakdown:")
+        y -= 16
+        for k, v in scores.items():
+            c.drawString(margin + 20, y, f"{k}: {v}")
+            y -= 14
+            if y < 100:
+                c.showPage(); y = height - margin
+        y -= 8
+        c.drawString(margin + 10, y, "Missing Points:")
+        y -= 14
+        for item in grading_json.get("missing_points", [])[:50]:
+            c.drawString(margin + 20, y, f"- {item}")
+            y -= 12
+            if y < 100:
+                c.showPage(); y = height - margin
+        y -= 8
+        c.drawString(margin + 10, y, "Mistakes:")
+        y -= 14
+        for item in grading_json.get("mistakes", [])[:50]:
+            c.drawString(margin + 20, y, f"- {item}")
+            y -= 12
+            if y < 100:
+                c.showPage(); y = height - margin
+        y -= 8
+        c.drawString(margin + 10, y, "Improvement:")
+        y -= 14
+        for line in str(grading_json.get("improvement", "")).splitlines():
+            c.drawString(margin + 10, y, line[:100])
+            y -= 12
+            if y < 100:
+                c.showPage(); y = height - margin
+    except Exception as e:
+        c.drawString(margin + 10, y, f"Error creating report content: {e}")
+
+    c.showPage()
+    c.save()
+    buf.seek(0)
+    return buf.read()
+
+# ----------------------------
+# UI: Upload or type questions
+# ----------------------------
+st.header("1. Upload or Type Questions")
+uploaded_q_files = st.file_uploader("Upload question files (PDF or TXT). You can upload multiple.", accept_multiple_files=True, type=["pdf", "txt"])
+typed_q = st.text_area("OR paste / type questions here (separate multiple questions with a blank line):", height=120)
+
+questions_list = []
+if uploaded_q_files:
+    questions_from_files = load_questions_from_txt_or_pdf(uploaded_q_files)
+    questions_list.extend(questions_from_files)
+if typed_q and typed_q.strip():
+    # split by blank lines
+    typed_blocks = [b.strip() for b in typed_q.split("\n\n") if b.strip()]
+    questions_list.extend(typed_blocks)
+
+# remove empties and trim
+questions_list = [q.strip() for q in questions_list if q.strip()]
+
+if not questions_list:
+    st.info("No questions loaded yet. Upload files or type questions above.")
+else:
+    st.success(f"Loaded {len(questions_list)} question(s).")
+
+# Show questions and let user select one
+if questions_list:
+    st.header("2. Select a Question to Grade")
+    selected_index = st.selectbox("Choose question", list(range(len(questions_list))), format_func=lambda i: questions_list[i][:120] + ("..." if len(questions_list[i])>120 else ""))
+    selected_question = questions_list[selected_index]
+    st.markdown("**Selected question:**")
+    st.write(selected_question)
+
+    # Question settings
+    q_type = st.selectbox("Question type", ["subjective", "mcq"], index=0)
+    if q_type == "mcq":
+        st.write("MCQ: enter options and correct option")
+        opts_raw = st.text_area("Enter options (one per line)", value="Option A\nOption B\nOption C\nOption D", height=100)
+        options = [o.strip() for o in opts_raw.splitlines() if o.strip()]
+        correct_option = st.selectbox("Correct option (teacher reference)", options)
+        max_marks = st.number_input("Max marks for MCQ", min_value=0.0, value=1.0)
+        negative_mark = st.number_input("Negative marking per wrong (>=0)", min_value=0.0, value=0.0)
     else:
-        if q_type == "mcq":
-            # simple MCQ check
-            chosen_option = st.selectbox("Assume student selected:", options)
-            # compute score
-            score = float(max_marks) if chosen_option == correct_option else -float(negative_mark)
-            score = max(score, 0.0)  # don't allow negative final
-            st.success(f"MCQ Result: {score} / {max_marks}")
-            st.write("**Correct option:**", correct_option)
-            if chosen_option != correct_option:
-                st.info("Explanation: The correct answer is shown above. Student marked wrong.")
+        max_marks = st.number_input("Max marks for subjective question", min_value=1.0, value=5.0)
+        model_answer = st.text_area("Model answer / key points (for rubric):", height=150)
+
+    # Student answer input
+    st.header("3. Student's Answer")
+    input_mode = st.radio("Answer input mode", ["Type answer", "Upload image (photo/handwritten)"])
+    student_answer = ""
+    if input_mode == "Type answer":
+        student_answer = st.text_area("Student answer", height=250)
+    else:
+        uploaded_img = st.file_uploader("Upload student's answer image (jpg/png):", type=["jpg","jpeg","png"], key="answer_img")
+        if uploaded_img:
+            st.image(uploaded_img, caption="Uploaded student's answer")
+            with st.spinner("Running OCR..."):
+                student_answer = ocr_image_to_text(uploaded_img)
+            st.text_area("OCR result (editable)", value=student_answer, height=250)
+
+    # grading controls
+    st.header("4. Grade")
+    model_input = st.selectbox("Choose model", [DEFAULT_MODEL], index=0)
+    temp = st.slider("Temperature (LLM creativity)", 0.0, 1.0, 0.2)
+    max_tok = st.number_input("Max tokens for LLM response", min_value=200, max_value=4000, value=800, step=100)
+
+    if st.button("Grade this answer"):
+        if not GROQ_API_KEY:
+            st.error("Groq API key not found. Set it in Streamlit secrets or environment, or paste above.")
+        elif not selected_question.strip():
+            st.warning("No question selected.")
+        elif not student_answer or not student_answer.strip():
+            st.warning("Please provide student's answer (type or upload image).")
         else:
-            # Subjective: build rubric & prompt and call Groq
-            rubric = {
-                "max_marks": float(max_marks),
-                "criteria": {
-                    "content_correctness": round(0.5 * float(max_marks), 2),
-                    "method_steps": round(0.3 * float(max_marks), 2),
-                    "presentation": round(0.1 * float(max_marks), 2),
-                    "language_keywords": round(0.1 * float(max_marks), 2)
+            if q_type == "mcq":
+                # Ask user what student selected
+                chosen = st.selectbox("Assume student selected:", options)
+                raw_score = float(max_marks) if chosen == correct_option else -float(negative_mark)
+                score = max(0.0, raw_score)
+                st.success(f"MCQ Score: {score} / {max_marks}")
+                st.write("Correct option:", correct_option)
+            else:
+                # Build rubric weights automatically (customizable)
+                rubric = {
+                    "max_marks": float(max_marks),
+                    "criteria": {
+                        "content_correctness": round(0.5 * float(max_marks), 2),
+                        "method_steps": round(0.3 * float(max_marks), 2),
+                        "presentation": round(0.1 * float(max_marks), 2),
+                        "language_keywords": round(0.1 * float(max_marks), 2)
+                    }
                 }
-            }
-            # normalize criteria to sum to max_marks
-            s = sum(rubric["criteria"].values())
-            if s != rubric["max_marks"]:
-                factor = rubric["max_marks"] / s
-                for k in rubric["criteria"]:
-                    rubric["criteria"][k] = round(rubric["criteria"][k] * factor, 2)
+                # normalize
+                s = sum(rubric["criteria"].values())
+                if s != rubric["max_marks"]:
+                    factor = rubric["max_marks"] / s
+                    for k in rubric["criteria"]:
+                        rubric["criteria"][k] = round(rubric["criteria"][k] * factor, 2)
 
-            st.write("Using rubric:", rubric)
+                st.write("Using rubric:", rubric)
 
-            # Build prompt carefully — ask for JSON only
-            few_shot = """
-You are a strict board-level examiner. Grade the student answer strictly according to the rubric and model answer.
-Return ONLY a JSON object (no extra text) with keys:
-- scores: {content_correctness:float, method_steps:float, presentation:float, language_keywords:float}
-- total_score: float
-- missing_points: [list of missing key points]
-- mistakes: [list of mistakes or incorrect statements]
-- improvement: short advice (one or two sentences)
-Make numeric scores sum to max_marks (allow decimals). Cap at max_marks.
-"""
-            prompt_user = f"""
-Question: {question_text}
+                # compose prompt asking for JSON only
+                system = "You are a strict board-style examiner. Grade according to rubric and model answer. Return ONLY a JSON with keys: scores (dict of criteria), total_score (float), missing_points (list), mistakes (list), improvement (string). Numeric scores should sum to max_marks. Do not include any extra text."
+                user_prompt = f"""Question: {selected_question}
 
 Model answer / key points: {model_answer}
 
 Rubric (max marks = {rubric['max_marks']}): {json.dumps(rubric['criteria'])}
 
-Student answer: {student_answer_text}
+Student answer: {student_answer}
 
-Return the JSON as described.
-"""
+Return the JSON as described."""
+                messages = [{"role": "system", "content": system}, {"role": "user", "content": user_prompt}]
+                with st.spinner("Calling Groq for grading..."):
+                    resp = call_groq(model=model_input, messages=messages, temperature=temp, max_tokens=int(max_tok), api_key=GROQ_API_KEY)
 
-            messages = [
-                {"role": "system", "content": few_shot},
-                {"role": "user", "content": prompt_user}
-            ]
-
-            with st.spinner("Calling Groq for grading... (may take a few seconds)"):
-                groq_resp = call_groq(model=model, messages=messages, temperature=temperature, max_tokens=max_tokens)
-
-            # handle errors
-            if isinstance(groq_resp, dict) and "error" in groq_resp:
-                st.error("Groq API error: " + groq_resp["error"])
-            else:
-                # parse model's content
-                try:
-                    content = groq_resp["choices"][0]["message"]["content"]
-                except Exception:
-                    st.error("Unexpected Groq response format.")
-                    st.write(groq_resp)
-                    content = None
-
-                if content:
-                    # Try to extract JSON from content robustly
-                    parsed = None
+                if isinstance(resp, dict) and "error" in resp:
+                    st.error("Groq error: " + resp["error"])
+                else:
+                    # parse
                     try:
-                        parsed = json.loads(content.strip())
+                        content = resp["choices"][0]["message"]["content"]
                     except Exception:
-                        # attempt to find first { ... } in text
+                        st.error("Unexpected Groq response format.")
+                        st.write(resp)
+                        content = None
+
+                    parsed = None
+                    if content:
                         try:
-                            start = content.index("{")
-                            end = content.rindex("}") + 1
-                            parsed = json.loads(content[start:end])
-                        except Exception as e:
-                            st.warning("Could not parse JSON directly. Showing raw LLM output for debugging.")
-                            st.code(content)
-                            parsed = None
+                            parsed = json.loads(content.strip())
+                        except Exception:
+                            try:
+                                # extract first {...}
+                                start = content.index("{")
+                                end = content.rindex("}") + 1
+                                parsed = json.loads(content[start:end])
+                            except Exception as e:
+                                st.warning("Could not parse JSON from LLM. Showing raw output:")
+                                st.code(content)
+                                parsed = None
 
                     if parsed:
-                        # sanity: cap total_score
                         total = float(parsed.get("total_score", 0.0))
                         total = max(0.0, min(total, rubric["max_marks"]))
                         parsed["total_score"] = round(total, 2)
-                        st.subheader("📊 Grading Result")
-                        st.write(f"**Total:** {parsed['total_score']} / {rubric['max_marks']}")
-                        st.markdown("**Breakdown:**")
+                        st.subheader("Result")
+                        st.success(f"Total: {parsed['total_score']} / {rubric['max_marks']}")
+                        st.markdown("**Breakdown**")
                         st.json(parsed.get("scores", {}))
-                        st.markdown("**Missing Points:**")
+                        st.markdown("**Missing Points**")
                         st.write(parsed.get("missing_points", []))
-                        st.markdown("**Mistakes:**")
+                        st.markdown("**Mistakes**")
                         st.write(parsed.get("mistakes", []))
-                        st.markdown("**Improvement Tip:**")
+                        st.markdown("**Improvement Tip**")
                         st.write(parsed.get("improvement", ""))
-                        # Option: let teacher override (simple input)
-                        override = st.checkbox("Teacher override marks?")
-                        if override:
-                            new_mark = st.number_input("Enter corrected total marks", min_value=0.0, max_value=rubric["max_marks"], value=parsed["total_score"])
-                            if st.button("Save override"):
-                                st.success(f"Saved override marks: {new_mark} / {rubric['max_marks']}")
+
+                        # PDF report
+                        if st.button("Download PDF Report"):
+                            pdf_bytes = generate_pdf_report(selected_question, student_answer, parsed)
+                            st.download_button("⬇️ Download Report (PDF)", data=pdf_bytes, file_name="grading_report.pdf", mime="application/pdf")
                     else:
-                        st.error("Failed to parse model output into JSON. See raw output above.")
+                        st.error("Failed to parse LLM output. See raw output above for debugging.")
