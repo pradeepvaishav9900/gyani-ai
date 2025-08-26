@@ -18,5 +18,7 @@ wikipedia==1.4.0
 langdetect==1.0.9
 googletrans==4.0.0-rc1
 streamlit-drawable-canvas
+requests
+streamlit-authenticator
 
 
